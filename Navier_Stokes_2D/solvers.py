@@ -26,7 +26,7 @@ mpl.rcParams['figure.dpi']=300
 
 #__all__ = ['LinearSystem_solver', 'Gauge_method', 'Alg1', 'Error']
 
-cfg = poisson_CNN.convert_tf_object_names(json.load(open('/poisson_CNN/poisson_CNN/experiments/hpnn_neumann_piloss_smalldomain.json')))
+cfg = poisson_CNN.convert_tf_object_names(json.load(open('../poisson_CNN/experiments/hpnn_neumann_piloss_smalldomain.json')))
 model = poisson_CNN.models.Homogeneous_Poisson_NN_Legacy(**cfg['model'])
 _ = model([tf.random.uniform((2,1,100,100)), tf.random.uniform((2,1))])
 model.compile(loss='mse', optimizer = 'adam')
