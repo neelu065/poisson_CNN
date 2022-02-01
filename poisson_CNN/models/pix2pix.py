@@ -4,7 +4,7 @@ Taken from https://www.tensorflow.org/tutorials/generative/pix2pix
 
 import tensorflow as tf
 
-from ..layers import deconvupscale
+from poisson_CNN.layers import deconvupscale
 
 def downsample(filters, size, apply_batchnorm=True):
   initializer = tf.random_normal_initializer(0., 0.02)
