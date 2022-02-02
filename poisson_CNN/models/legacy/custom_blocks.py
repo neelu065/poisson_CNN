@@ -4,7 +4,7 @@ import opt_einsum as oe
 import numpy as np
 import copy
 
-from ...layers import Upsample, DeconvUpscale2D, SpatialPyramidPool
+from ..layers import Upsample, DeconvUpscale2D, SpatialPyramidPool
 
 class SepConvBlock(tf.keras.models.Model):
     def __init__(self, data_format = 'channels_first', separable_kernel_size  = (5,256), nonsep_kernel_size = 5, separable_activation = tf.nn.leaky_relu, nonsep_activation = tf.nn.leaky_relu, separable_filters = 8, nonsep_filters = 4):
