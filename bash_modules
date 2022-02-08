@@ -1,0 +1,4 @@
+module load apps/python-package/nvhpc/21.3
+module load compiler/gcc/8.3.0
+module load compiler/cudnn/8.1.0
+module load compiler/cuda/11.0
