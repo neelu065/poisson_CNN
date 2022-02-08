@@ -1,0 +1,14 @@
+# AMGX
+LD_LIBRARY_PATH=$HOME/amgx/build:$LD_LIBRARY_PATH
+LD_PRELOAD="/opt/ohpc/pub/compiler/gcc/8.3.0/lib64/libstdc++.so.6 $LD_PRELOAD"
+export LD_LIBRARY_PATH
+export LD_PRELOAD
+
+export AMGX_DIR=/home/j20210241/amgx
+
+# TENSORFLOW LOW-LEVEL INFORMATION SUPRESSOR.
+export TF_CPP_MIN_LOG_LEVEL=2
+
+## Additional Paths
+export PATH=/home/j20210241/imp_software/pycharm-community-2021.3/bin:$PATH
+
