@@ -9,3 +9,4 @@ poisson_CNN.egg-info/
 *.pyc
 *.json~
 *.txt
+chkpt*
