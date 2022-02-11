@@ -571,5 +571,4 @@ if __name__ == '__main__':
         print(s.shape)
         #print(tf.reduce_sum(t))
     t1 = time.time()
-    print(sum(times)/len(times))
     print(s.shape)
