@@ -10,3 +10,4 @@ poisson_CNN.egg-info/
 *.json~
 *.txt
 chkpt*
+.idea/
