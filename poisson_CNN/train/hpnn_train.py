@@ -39,7 +39,7 @@ out = model(inp)
 
 model.compile(loss=loss,optimizer=optimizer)
 cb = [
-    tf.keras.callbacks.ModelCheckpoint(checkpoint_dir + '/chkpt.checkpoint',save_weights_only=True,save_best_only=True,monitor = 'loss'),
+    tf.keras.callbacks.ModelCheckpoint(checkpoint_dir + '/chkpt-epoch-{epoch:02d}.mse-{mse:.4f}',save_weights_only=True,save_best_only=True,monitor = 'loss', verbose=1),
     tf.keras.callbacks.ReduceLROnPlateau(patience = 4,monitor='loss',min_lr=config['training']['min_learning_rate']),
     tf.keras.callbacks.TerminateOnNaN()
 ]

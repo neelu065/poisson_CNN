@@ -44,7 +44,7 @@ with dist_strategy.scope():
     out = model([inp[0][:1],inp[1][:1,:1]])
     model.compile(loss=loss,optimizer=optimizer)
     cb = [
-        tf.keras.callbacks.ModelCheckpoint(checkpoint_dir + '/chkpt.checkpoint',save_weights_only=True,save_best_only=True,monitor = 'loss'),
+        tf.keras.callbacks.ModelCheckpoint(checkpoint_dir + '/chkpt-epoch-{epoch:02d}.mse-{mse:.4f}', save_weights_only=True, save_best_only=True, monitor='mse', verbose=1),
         tf.keras.callbacks.ReduceLROnPlateau(patience = 4,monitor='loss',min_lr=config['training']['min_learning_rate']),
         tf.keras.callbacks.TerminateOnNaN()
     ]
@@ -57,4 +57,4 @@ with dist_strategy.scope():
     model.summary()
     #model.run_eagerly = True
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-    model.fit(dataset,epochs=config['training']['n_epochs'],callbacks = cb)
+    model.fit(dataset,epochs=config['training']['n_epochs'],callbacks = cb) #, initial_epoch=3)

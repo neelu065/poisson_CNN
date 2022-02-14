@@ -36,7 +36,7 @@ with dist_strategy.scope():
     out = model(inp + [tf.shape(tar)[2]])
     model.compile(loss=loss,optimizer=optimizer)
     cb = [
-        tf.keras.callbacks.ModelCheckpoint(checkpoint_dir + '/chkpt.checkpoint',save_weights_only=True,save_best_only=True,monitor = 'mse'),
+        tf.keras.callbacks.ModelCheckpoint(checkpoint_dir + '/chkpt-epoch-{epoch:02d}.mse-{mse:.4f}', save_weights_only=True, save_best_only=True, monitor='mse', verbose=1),
         tf.keras.callbacks.ReduceLROnPlateau(patience = 4,monitor='loss',min_lr=config['training']['min_learning_rate']),
         tf.keras.callbacks.TerminateOnNaN()
     ]
@@ -47,4 +47,4 @@ with dist_strategy.scope():
         model.optimizer.learning_rate = config['training']['optimizer_parameters']['learning_rate'] if args.learning_rate.lower() == 'from_json' else float(args.learning_rate)
         
     model.summary()
-    model.fit(dataset,epochs=config['training']['n_epochs'],callbacks = cb)
+    model.fit(dataset,epochs=config['training']['n_epochs'],callbacks = cb) #initial_epoch
