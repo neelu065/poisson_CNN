@@ -61,7 +61,7 @@
 	}
     },
     "dataset":{
-	"batch_size":50,
+	"batch_size":20,
 	"batches_per_epoch":200,
 	"random_output_shape_range": [[192,384],[192,384]],
 	"fourier_coeff_grid_size_range": [[1,8],[1,8]],
