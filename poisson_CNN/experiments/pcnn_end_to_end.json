@@ -90,7 +90,7 @@
 	"postsmoother_iterations": 0
     },
     "dataset":{
-	"batch_size": 5,
+	"batch_size": 3,
 	"batches_per_epoch": 200,
 	"random_output_shape_range": [[192,384],[192,384]],
 	"random_dx_range": [5e-3,5e-2],
@@ -126,9 +126,4 @@
 	    "scale_sample_loss_by_target_peak_magnitude": true
 	}
     }
-
-
-
-
-
 }
