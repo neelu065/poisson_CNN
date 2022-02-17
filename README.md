@@ -15,3 +15,12 @@ Command to rerun the model:
 
 - python3 -m poisson_CNN.train.dbcnn_legacy_train ~/AI_CFD/poisson_CNN/poisson_CNN/poisson_CNN/experiments/dbcnn.json --continue_from_checkpoint /scratch/j20210241/poisson_cnn_model_test/
 - pass initial_epoch=epoch number in latest chkpt file name into model.fit()
+
+- hpnn_restart_command.
+- python -m poisson_CNN.train.hpnn_legacy_train_neumann ~/AI_CFD/poisson_CNN/poisson_CNN/poisson_CNN/experiments/hpnn_neumann.json --continue_from_checkpoint /scratch/j20210241/poisson_cnn_model_test/hpnn_legacy_train_neumann/ &> log_restart_neumann_3 &
+
+- dbcnn_rnn_restart_command.
+- python -m poisson_CNN.train.dbcnn_rnn_train ~/AI_CFD/poisson_CNN/poisson_CNN/poisson_CNN/experiments/dbcnn_rnn.json --continue_from_checkpoint /scratch/j20210241/poisson_cnn_model_test/dbcnn_rnn_train_salloc/ &> log_restart_dbcnn_rnn_4 &
+
+- NS_solver_commnad.
+- python ~/AI_CFD/poisson_CNN/poisson_CNN/Navier_Stokes_2D/run_solvers.py &> log_NS_solver_plot &
