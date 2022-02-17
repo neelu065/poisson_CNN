@@ -30,7 +30,8 @@ cfg = poisson_CNN.convert_tf_object_names(json.load(open('/home/j20210241/AI_CFD
 model = poisson_CNN.models.Homogeneous_Poisson_NN_Legacy(**cfg['model'])
 _ = model([tf.random.uniform((2,1,100,100)), tf.random.uniform((2,1))])
 model.compile(loss='mse', optimizer = 'adam')
-model.load_weights('/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/chkpt.checkpoint')
+#model.load_weights('/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/chkpt.checkpoint')
+model.load_weights('/scratch/j20210241/poisson_cnn_model_test/hpnn_legacy_train_salloc/chkpt-epoch-169.mse-0.0000')
 
 class LinearSystem_solver():
     '''this class contains the linear system solvers for both velocity and pressure
@@ -39,7 +40,7 @@ class LinearSystem_solver():
     _timestep_counter = itertools.count(0)
     def __init__(self, Re, mesh, integration_method='Riemann'):
         
-        self._images_folder = '/storage/Navier_Stokes_2D/plots_zero+bicgstab2/'
+        self._images_folder = '/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/Navier_Stokes_2D/plots/'
         #self.mod = mod
         self.mesh = mesh
         self.Re = Re
