@@ -47,4 +47,4 @@ with dist_strategy.scope():
         model.optimizer.learning_rate = config['training']['optimizer_parameters']['learning_rate'] if args.learning_rate.lower() == 'from_json' else float(args.learning_rate)
         
     model.summary()
-    model.fit(dataset,epochs=config['training']['n_epochs'],callbacks = cb, initial_epoch=122) #initial_epoch
+    model.fit(dataset,epochs=config['training']['n_epochs'],callbacks = cb, initial_epoch=177) #initial_epoch
