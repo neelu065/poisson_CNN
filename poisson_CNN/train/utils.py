@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+
 def choose_optimizer(name):
     name = name.lower()
     if name == "adam":
@@ -7,13 +8,14 @@ def choose_optimizer(name):
     elif name == "sgd":
         return tf.keras.optimizers.SGD
 
-def load_model_checkpoint(model, checkpoint_path, model_config = None, sample_model_input = None):
+
+def load_model_checkpoint(model, checkpoint_path, model_config=None, sample_model_input=None):
     if checkpoint_path is not None:
         checkpoint_filename = tf.train.latest_checkpoint(checkpoint_path)
         print('Attempting to load checkpoint from ' + checkpoint_filename)
         try:
             model.load_weights(checkpoint_filename)
-        except:#tf is stupid and is incapable of casting weights saved as eg float32 to float64. handle that problem.
+        except:  # tf is stupid and is incapable of casting weights saved as eg float32 to float64. handle that problem.
             original_floatx = tf.keras.backend.floatx()
             checkpoint = tf.train.load_checkpoint(checkpoint_filename)
             weight_name_list = tf.train.list_variables(checkpoint_filename)
@@ -27,4 +29,3 @@ def load_model_checkpoint(model, checkpoint_path, model_config = None, sample_mo
             del dummy_model, checkpoint, weight_name_list, checkpoint_dtype
     else:
         pass
-
