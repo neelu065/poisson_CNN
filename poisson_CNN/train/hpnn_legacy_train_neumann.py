@@ -54,4 +54,4 @@ with dist_strategy.scope():
     model.summary()
     #model.run_eagerly = True
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-    model.fit(dataset,epochs=config['training']['n_epochs'],callbacks = cb, initial_epoch=41)
+    model.fit(dataset,epochs=config['training']['n_epochs'],callbacks = cb, initial_epoch=67)
