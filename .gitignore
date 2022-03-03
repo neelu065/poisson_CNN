@@ -12,5 +12,5 @@ poisson_CNN.egg-info/
 chkpt*
 .idea/
 Navier_Stokes_2D/plots
-Navier_Stokes_2D/plots_old/
+Navier_Stokes_2D/plots_old/*
 Navier_Stokes_2D/*.png
