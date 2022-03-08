@@ -2,9 +2,23 @@ import argparse, json, os
 import datetime
 import tensorflow as tf
 
+dist_strategy = tf.distribute.MultiWorkerMirroredStrategy(communication_options=tf.distribute.experimental.CommunicationOptions(
+                                        implementation=tf.distribute.experimental.CollectiveCommunication.NCCL)
+)
 # os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
-# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-os.environ['NCCL_DEBUG'] = 'INFO'
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# from tensorflow.python.distribute.cluster_resolver import TFConfigClusterResolver
+# cluster = tf.train.ClusterSpec({"worker": ["172.10.0.104:12345",
+#                                              "172.10.0.113:12345"]})
+#
+# # On worker 0
+# cluster_resolver = tf.distribute.cluster_resolver.SimpleClusterResolver(cluster, task_type="worker",
+#                                        task_id=0,
+#                                        num_accelerators={"GPU": 2},
+#                                        rpc_layer="grpc")
+#
+#
+# os.environ['NCCL_DEBUG'] = 'INFO'
 # os.environ.pop('TF_CONFIG', None)
 # os.environ["TF_CONFIG"] = json.dumps({
 #     'cluster': {
@@ -13,7 +27,10 @@ os.environ['NCCL_DEBUG'] = 'INFO'
 #     'task': {'type': 'worker', 'index': 0}
 # })
 print(os.environ.get("TF_CONFIG"))
+from tensorflow.python.eager import context
 
+dist_strategy.context.Context().configure_collective_ops(
+      collective_leader="'/job:worker/replica:0/task:0'")
 
 # physical_devices = tf.config.list_physical_devices('GPU')
 # print(physical_devices)
@@ -26,7 +43,6 @@ from ..utils import convert_tf_object_names
 from ..models import Homogeneous_Poisson_NN_Legacy, Dirichlet_BC_NN_Legacy_2, Poisson_CNN_Legacy
 from ..losses import loss_wrapper
 from ..dataset.generators import numerical_dataset_generator, reverse_poisson_dataset_generator
-
 
 parser = argparse.ArgumentParser(description="Train the Homogeneous Poisson NN")
 parser.add_argument("config", type=str, help="Path to the configuration json for training, model and dataset parameters")
@@ -44,9 +60,7 @@ if 'precision' in config['training'].keys():
 
 dataset = numerical_dataset_generator(randomize_boundary_smoothness = True, exclude_zero_boundaries = False, nonzero_boundaries = ['left','right','top','bottom'], rhses = 'random', return_boundaries=True, return_dx = True, return_rhs = True, **config['dataset'])
 
-dist_strategy = tf.distribute.MirroredStrategy(cross_device_ops=tf.distribute.ReductionToOneDevice())#nccl causes errors on POWER9
-
-# dist_strategy = tf.distribute.MultiWorkerMirroredStrategy()
+    # dist_strategy = tf.distribute.MirroredStrategy(cross_device_ops=tf.distribute.ReductionToOneDevice())#nccl causes errors on POWER9
 with dist_strategy.scope():
     hpnn = Homogeneous_Poisson_NN_Legacy(**config['hpnn_model'])
     dbcnn = Dirichlet_BC_NN_Legacy_2(**config['dbcnn_model'])
@@ -56,7 +70,6 @@ with dist_strategy.scope():
     optimizer = choose_optimizer(config['training']['optimizer'])(**config['training']['optimizer_parameters'])
     loss = loss_wrapper(global_batch_size=config['dataset']['batch_size'], **config['training']['loss_parameters'])
     model.compile(loss=loss,optimizer=optimizer)
-
 
     log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     cb = [
@@ -81,4 +94,5 @@ with dist_strategy.scope():
     model.run_eagerly = True
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
-    model.fit(dataset,epochs=config['training']['n_epochs'],callbacks = cb)
+    model.train_on_batch(dataset,epochs=config['training']['n_epochs'],callbacks = cb)
+    # model.fit(dataset, epochs=config['training']['n_epochs'], callbacks=cb)
