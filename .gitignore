@@ -10,6 +10,7 @@ poisson_CNN.egg-info/
 *.json~
 *.txt
 chkpt*
+poisson_CNN/experiments/*.json
 .idea/
 Navier_Stokes_2D/plots
 Navier_Stokes_2D/plots_old/*
