@@ -19,11 +19,11 @@ setuptools.setup(
         "Operating System :: OS Independent",
         "Topic :: Scientific/Engineering"
     ],
-    install_requires=[
-        "tensorflow",
-	"tensorflow-probability",
-	"pyamg",
-	"scipy"    
-    ],
+    #install_requires=[
+        #"tensorflow",
+	#"tensorflow-probability",
+	#"pyamg",
+	#"scipy"    
+    #],
     python_requires='>=3.6'
 )
