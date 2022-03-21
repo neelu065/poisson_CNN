@@ -90,7 +90,7 @@
 	"postsmoother_iterations": 0
     },
     "dataset":{
-	"batch_size": 5,
+	"batch_size": 3,
 	"batches_per_epoch": 4,
 	"random_output_shape_range": [[192,384],[192,384]],
 	"random_dx_range": [5e-3,5e-2],
@@ -100,8 +100,9 @@
 	"boundary_random_smoothness_range": {"left": [3,8], "right": [3,8], "top": [3,8], "bottom": [3,8]}
     },
     "training":{
-	"n_epochs": 50,
-	"precision": "float32",
+	"n_epochs": 5,
+	"precision_new": "mixed_float16",
+	"precision":"float32",
 	"optimizer": "adam",
 	"optimizer_parameters":{
 	    "learning_rate": 1e-5,
