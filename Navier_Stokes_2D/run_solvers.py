@@ -71,7 +71,7 @@ def get_inputs():
 	if test_problem_name == 'driven_cavity':
 		pass
 	else:
-		Error_analysis_option = 'N'#input('Error analysis ? (Y/N) (default no) ')
+		Error_analysis_option = 'Y'#input('Error analysis ? (Y/N) (default no) ')
 		if 'Y' in Error_analysis_option or 'y' in Error_analysis_option:
 			Error_analysis_option = True
 			Niter = input('How many times you want to run the solver? (Default is 5 and this corresponds to grid size of 15, 30, 60, 120 and 240): ')
@@ -100,7 +100,7 @@ def get_inputs():
 	except ValueError:
 		gridsize = int(input('Grid size must be integers, try again: '))
 
-	plot_option = 'N'#input('plot results optional (Y/N): (default no)')
+	plot_option = 'Y'#input('plot results optional (Y/N): (default no)')
 	if 'Y' in plot_option:
 		plot_option = True
 	elif 'y' in plot_option:
@@ -211,7 +211,7 @@ def error_analysis(xl, xr, t0, tf, method, test_problem_name, CFL=0.1, Re=1.0, N
 	plt.ylabel('log(error)')
 	plt.title('log log plot of the temporal error convergence rates for velocity, method: ' + method+', flow problem: '+ test_problem_name+', CFL = %s' % CFL)
 	plt.legend(loc=4)
-
+	plt.savefig('error.V_dt.png')
 	# for pressure
 	plt.figure(2)
 	plt.plot(log_dt, log_dt*P_slope_L1+P_intercept_L1+3, label='L1 pressure error, convergence rate = %s' % P_slope_L1, color='r')
@@ -225,8 +225,8 @@ def error_analysis(xl, xr, t0, tf, method, test_problem_name, CFL=0.1, Re=1.0, N
 	plt.ylabel('log(error)')
 	plt.title('log log plot of the temporal error convergence rates for pressure, method: '+ method+', flow problem: '+ test_problem_name+', CFL = %s' % CFL)
 	plt.legend(loc=4)
-
-	plt.show()
+	plt.savefig('error.P_dt.png')
+	#plt.show()
 
 def run_Navier_Stokes_solver(xl, xr, t0, tf, gridsize, method, test_problem_name, plot_option, CFL=0.1, Re=1.0):
 	grid_size_domain = [gridsize, gridsize]
@@ -312,7 +312,7 @@ def run_Navier_Stokes_solver(xl, xr, t0, tf, gridsize, method, test_problem_name
 		ax1.set_xlabel('x')
 		ax1.set_ylabel('y')
 		ax1.set_title('Plot of Numerical U Velocity at Time = '+str(tend))
-		#plt.savefig('Gauge_Taylor_U_exact_grid_'+str(n)+'.jpg', bbox_inches='tight')
+		plt.savefig('Gauge_Taylor_U_exact_grid_'+str(n)+'.jpg', bbox_inches='tight')
 		#plt.savefig('Gauge_unf1_U_exact_grid_'+str(n)+'.pdf', bbox_inches='tight')
 		
 		fig2 = plt.figure(figsize=(6,6), dpi=100)
@@ -321,7 +321,7 @@ def run_Navier_Stokes_solver(xl, xr, t0, tf, gridsize, method, test_problem_name
 		ax2.set_xlabel('x')
 		ax2.set_ylabel('y')
 		ax2.set_title('Plot of Numerical V Velocity at Time = '+str(tend))
-		#plt.savefig('Gauge_Taylor_V_exact_grid_'+str(n)+'.jpg', bbox_inches='tight')
+		plt.savefig('Gauge_Taylor_V_exact_grid_'+str(n)+'.jpg', bbox_inches='tight')
 		#plt.savefig('Gauge_Taylor_V_exact_grid_'+str(n)+'.pdf', bbox_inches='tight')
 		
 		fig3 = plt.figure(figsize=(6,6), dpi=100)
@@ -330,7 +330,7 @@ def run_Navier_Stokes_solver(xl, xr, t0, tf, gridsize, method, test_problem_name
 		ax3.set_xlabel('x')
 		ax3.set_ylabel('y')
 		ax3.set_title('Plot of Numerical Pressure at Time = '+str(tend))
-		#plt.savefig('Gauge_Taylor_pf_grid_'+str(n)+'.jpg', bbox_inches='tight')
+		plt.savefig('Gauge_Taylor_pf_grid_'+str(n)+'.jpg', bbox_inches='tight')
 		#plt.savefig('Gauge_Taylor_pf_grid_'+str(n)+'.pdf', bbox_inches='tight')
 		
 		if test_problem_name == 'driven_cavity':
@@ -389,4 +389,3 @@ if __name__ == "__main__":
 		print("V velocity error is %s " % Velocity_error[1])
 		print("Pressure error is %s " % Pressure_error)
 		print("average gradient Pressure error is %s " % avg_gradp_error)
-

@@ -1,0 +1,75 @@
+Model: "unet"
+__________________________________________________________________________________________________
+ Layer (type)                   Output Shape         Param #     Connected to                     
+==================================================================================================
+ inputs (InputLayer)            [(None, 1, None, No  0           []                               
+                                ne)]                                                              
+                                                                                                  
+ conv_block (ConvBlock)         (None, 64, None, No  37568       ['inputs[0][0]']                 
+                                ne)                                                               
+                                                                                                  
+ max_pooling2d (MaxPooling2D)   (None, 64, None, No  0           ['conv_block[0][0]']             
+                                ne)                                                               
+                                                                                                  
+ conv_block_1 (ConvBlock)       (None, 128, None, N  221440      ['max_pooling2d[0][0]']          
+                                one)                                                              
+                                                                                                  
+ max_pooling2d_1 (MaxPooling2D)  (None, 128, None, N  0          ['conv_block_1[0][0]']           
+                                one)                                                              
+                                                                                                  
+ conv_block_2 (ConvBlock)       (None, 256, None, N  885248      ['max_pooling2d_1[0][0]']        
+                                one)                                                              
+                                                                                                  
+ max_pooling2d_2 (MaxPooling2D)  (None, 256, None, N  0          ['conv_block_2[0][0]']           
+                                one)                                                              
+                                                                                                  
+ conv_block_3 (ConvBlock)       (None, 512, None, N  3539968     ['max_pooling2d_2[0][0]']        
+                                one)                                                              
+                                                                                                  
+ lambda_2 (Lambda)              (4,)                 0           ['conv_block_2[0][0]']           
+                                                                                                  
+ deconvupscale (deconvupscale)  (None, 256, None, N  524544      ['conv_block_3[0][0]',           
+                                one)                              'lambda_2[0][0]']               
+                                                                                                  
+ crop_concat_block (CropConcatB  (None, 512, None, N  0          ['deconvupscale[0][0]',          
+ lock)                          one)                              'conv_block_2[0][0]']           
+                                                                                                  
+ conv_block_4 (ConvBlock)       (None, 256, None, N  1769984     ['crop_concat_block[0][0]']      
+                                one)                                                              
+                                                                                                  
+ lambda_1 (Lambda)              (4,)                 0           ['conv_block_1[0][0]']           
+                                                                                                  
+ deconvupscale_1 (deconvupscale  (None, 128, None, N  131200     ['conv_block_4[0][0]',           
+ )                              one)                              'lambda_1[0][0]']               
+                                                                                                  
+ crop_concat_block_1 (CropConca  (None, 256, None, N  0          ['deconvupscale_1[0][0]',        
+ tBlock)                        one)                              'conv_block_1[0][0]']           
+                                                                                                  
+ conv_block_5 (ConvBlock)       (None, 128, None, N  442624      ['crop_concat_block_1[0][0]']    
+                                one)                                                              
+                                                                                                  
+ lambda (Lambda)                (4,)                 0           ['conv_block[0][0]']             
+                                                                                                  
+ deconvupscale_2 (deconvupscale  (None, 64, None, No  32832      ['conv_block_5[0][0]',           
+ )                              ne)                               'lambda[0][0]']                 
+                                                                                                  
+ crop_concat_block_2 (CropConca  (None, 128, None, N  0          ['deconvupscale_2[0][0]',        
+ tBlock)                        one)                              'conv_block[0][0]']             
+                                                                                                  
+ conv_block_6 (ConvBlock)       (None, 64, None, No  110720      ['crop_concat_block_2[0][0]']    
+                                ne)                                                               
+                                                                                                  
+ conv2d_14 (Conv2D)             (None, 1, None, Non  65          ['conv_block_6[0][0]']           
+                                e)                                                                
+                                                                                                  
+ activation_17 (Activation)     (None, 1, None, Non  0           ['conv2d_14[0][0]']              
+                                e)                                                                
+                                                                                                  
+ outputs (Activation)           (None, 1, None, Non  0           ['activation_17[0][0]']          
+                                e)                                                                
+                                                                                                  
+==================================================================================================
+Total params: 7,696,193
+Trainable params: 7,696,193
+Non-trainable params: 0
+__________________________________________________________________________________________________

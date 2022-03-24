@@ -1,0 +1,31 @@
+1/1 [==============================] - ETA: 0s - loss: 0.87201/1 [==============================] - 2s 2s/step - loss: 0.8720
+1/1 [==============================] - ETA: 0s - loss: 0.85721/1 [==============================] - 1s 641ms/step - loss: 0.8572
+Model: "bottleneck_block_deconvupsample"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ conv2d_4 (Conv2D)           multiple                  84        
+                                                                 
+ batch_normalization_2 (Batc  multiple                 12        
+ hNormalization)                                                 
+                                                                 
+ conv2d_5 (Conv2D)           multiple                  84        
+                                                                 
+ batch_normalization_3 (Batc  multiple                 12        
+ hNormalization)                                                 
+                                                                 
+ conv2d_3 (Conv2D)           multiple                  15        
+                                                                 
+ deconvupscale (deconvupscal  multiple                 228       
+ e)                                                              
+                                                                 
+=================================================================
+Total params: 435
+Trainable params: 423
+Non-trainable params: 12
+_________________________________________________________________
+--Return--
+> /home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/poisson_CNN/blocks/bottleneck_block.py(183)<module>()->None
+-> pdb.set_trace()
+(Pdb) --KeyboardInterrupt--
+(Pdb) 
