@@ -71,7 +71,7 @@ def get_inputs():
 	if test_problem_name == 'driven_cavity':
 		pass
 	else:
-		Error_analysis_option = 'Y'#input('Error analysis ? (Y/N) (default no) ')
+		Error_analysis_option = 'N'#input('Error analysis ? (Y/N) (default no) ')
 		if 'Y' in Error_analysis_option or 'y' in Error_analysis_option:
 			Error_analysis_option = True
 			Niter = input('How many times you want to run the solver? (Default is 5 and this corresponds to grid size of 15, 30, 60, 120 and 240): ')

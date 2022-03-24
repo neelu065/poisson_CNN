@@ -26,21 +26,27 @@ mpl.rcParams['figure.dpi'] = 300
 cfg = poisson_CNN.convert_tf_object_names(
     json.load(open('/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/poisson_CNN/experiments/hpnn.json')))
 model = poisson_CNN.models.Homogeneous_Poisson_NN_Legacy(**cfg['model'])
-_ = model([tf.random.uniform((2, 1, 100, 100)), tf.random.uniform((2, 1))])
+_ = model([tf.random.uniform((2,1,100,100)), tf.random.uniform((2,1))])
 model.compile(loss='mse', optimizer='adam')
 # model.load_weights('/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/chkpt.checkpoint')
-model.load_weights('/scratch/j20210241/poisson_cnn_model_test/hpnn_legacy_train_salloc/chkpt-epoch-169.mse-0.0000')
+model.load_weights('/scratch/j20210241/hor_poisson_CNN_home/hpnn_4_gpu_test/chkpt-epoch-07.mse-0.0000')
+#
+# cfg = poisson_CNN.convert_tf_object_names(json.load(open('/poisson_CNN/poisson_CNN/experiments/hpnn_neumann_piloss_smalldomain.json')))
+# model = poisson_CNN.models.Homogeneous_Poisson_NN_Legacy(**cfg['model'])
+# _ = model([tf.random.uniform((2,1,100,100)), tf.random.uniform((2,1))])
+# model.compile(loss='mse', optimizer = 'adam')
+# model.load_weights('/storage/training-results/hpnn_legacy_neumann_smallstencil_smalldomain/chkpt.checkpoint')
+#
 
-
-class LinearSystem_solver():
+class LinearSystem_solver:
     '''this class contains the linear system solvers for both velocity and pressure
 	it returns the linear system in Scipy sparse matrix form and linear operator form'''
     mod = model
     _timestep_counter = itertools.count(0)
 
     def __init__(self, Re, mesh, integration_method='Riemann'):
-        #self.mod = mod
-        self._images_folder = '/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/Navier_Stokes_2D/plots/'
+        # self.mod = mod
+        self._images_folder = '/scratch/j20210241/hor_poisson_CNN_home/NS_solver/plots'
         self.mesh = mesh
         self.Re = Re
         self.integration_method = integration_method
@@ -251,7 +257,7 @@ class LinearSystem_solver():
         print(pred, trhs, tdx)
         pred = (((dx * (n - 1)) ** 2) / sf) * pred
 
-        plt.imshow(pred[0, 0], extent = extent, vmax = vmax, vmin = vmin, cmap = 'RdBu', origin = 'lower')
+        plt.imshow(pred[0, 0], extent=extent, vmax=vmax, vmin=vmin, cmap='RdBu', origin='lower')
         plt.colorbar()
         # plt.savefig(self._images_folder + 'pred_' + str(ts) +'.png', bbox_inches = 'tight')
         # plt.close()
@@ -422,7 +428,7 @@ class Gauge_method():
             else:
                 # full Navier Stokes problem
                 rhs_mstar = mn_int + dt * (
-                            -1.5 * convc_uv + 0.5 * preconvc_uv + (1.0 / (2 * Re)) * diff_mn + forcing_term)
+                        -1.5 * convc_uv + 0.5 * preconvc_uv + (1.0 / (2 * Re)) * diff_mn + forcing_term)
 
                 # calculate the approximation to phi at time n+1
             gradphiuv = self.gradphi_app(phiold_cmp, phin_cmp)
@@ -615,7 +621,7 @@ class Gauge_method():
         gdphi_cmpu = (phiacd_cmp[:, 1:n + 2] - phiacd_cmp[:, 0:n + 1]) / dx
         gdphi_cmpuN = 5.0 / 16 * (gdphi_cmpu[0, :] + 3 * gdphi_cmpu[1, :] - gdphi_cmpu[2, :] + 0.2 * gdphi_cmpu[3, :])
         gdphi_cmpuS = 5.0 / 16 * (
-                    gdphi_cmpu[-1, :] + 3 * gdphi_cmpu[-2, :] - gdphi_cmpu[-3, :] + 0.2 * gdphi_cmpu[-4, :])
+                gdphi_cmpu[-1, :] + 3 * gdphi_cmpu[-2, :] - gdphi_cmpu[-3, :] + 0.2 * gdphi_cmpu[-4, :])
 
         # use phi^{n+1} just computed
         m1starN = uN + gdphi_cmpuN
@@ -627,7 +633,7 @@ class Gauge_method():
         gdphi_cmpv = (phiacd_cmp[1:m + 2, :] - phiacd_cmp[0:m + 1, :]) / dy
         gdphi_cmpvW = 5.0 / 16 * (gdphi_cmpv[:, 0] + 3 * gdphi_cmpv[:, 1] - gdphi_cmpv[:, 2] + 0.2 * gdphi_cmpv[:, 3])
         gdphi_cmpvE = 5.0 / 16 * (
-                    gdphi_cmpv[:, -1] + 3 * gdphi_cmpv[:, -2] - gdphi_cmpv[:, -3] + 0.2 * gdphi_cmpv[:, -4])
+                gdphi_cmpv[:, -1] + 3 * gdphi_cmpv[:, -2] - gdphi_cmpv[:, -3] + 0.2 * gdphi_cmpv[:, -4])
         m2starW = vW + gdphi_cmpvW
         m2starE = vE + gdphi_cmpvE
         m2star_cmp[:, 0] = (16.0 / 5) * m2starW - 3 * m2star_cmp[:, 1] + m2star_cmp[:, 2] - 0.2 * m2star_cmp[:, 3]
@@ -712,7 +718,7 @@ class Alg1_method():
             else:
                 # full Navier Stokes problem
                 rhs_uvstar = uvn_int + dt * (-1.5 * convc_uv + 0.5 * preconvc_uv - gradp_uvn + (
-                            1.0 / (2 * Re)) * diff_uvn + forcing_term)
+                        1.0 / (2 * Re)) * diff_uvn + forcing_term)
 
                 # boundary correction step
             rhs_uvstarcd = self.correct_boundary(rhs_uvstar, t + 1, Boundary_uv_type)
@@ -902,7 +908,7 @@ class Alg2_method():
             else:
                 # full Navier Stokes problem
                 rhs_uvstar = uvn_int + dt * (-1.5 * convc_uv + 0.5 * preconvc_uv - gradp_uvn + (
-                            1.0 / (2 * Re)) * diff_uvn + forcing_term)
+                        1.0 / (2 * Re)) * diff_uvn + forcing_term)
 
                 # boundary correction step
             rhs_uvstarcd = self.correct_boundary(rhs_uvstar, t + 1, Boundary_uv_type)
@@ -1090,7 +1096,7 @@ class Alg3_method():
             else:
                 # full Navier Stokes problem
                 rhs_uvstar = uvn_int + dt * (
-                            -1.5 * convc_uv + 0.5 * preconvc_uv + (1.0 / (2 * Re)) * diff_uvn + forcing_term)
+                        -1.5 * convc_uv + 0.5 * preconvc_uv + (1.0 / (2 * Re)) * diff_uvn + forcing_term)
 
                 # calculate the approximation to phi at time n+1
             gradphiuv = self.gradphi_app(phiold_cmp, phin_cmp)
