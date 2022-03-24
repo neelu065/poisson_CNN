@@ -1,4 +1,9 @@
 import tensorflow as tf
+import sys
+import warnings
+
+if not sys.warnoptions:  # allow overriding with `-W` option
+    warnings.filterwarnings('ignore', category=RuntimeWarning, module='runpy')
 
 from ..dataset.utils import set_max_magnitude_in_batch_and_return_scaling_factors, compute_domain_sizes, flip_and_rotate_tensor
 
@@ -69,6 +74,4 @@ class Poisson_CNN_Legacy(tf.keras.models.Model):
         super().compile()
         self.optimizer = optimizer
         self.loss_fn = loss
-
-
-            
+         
