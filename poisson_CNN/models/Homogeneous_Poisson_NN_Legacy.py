@@ -1,6 +1,6 @@
 import tensorflow as tf
 import math, copy
-
+import horovod.tensorflow as hvdt
 from .Homogeneous_Poisson_NN_Metalearning import get_init_arguments_from_config, process_normalizations, \
     process_output_scaling_modes, process_regularizer_initializer_and_constraint_arguments
 from ..blocks import bottleneck_block_multilinearupsample, bottleneck_block_deconvupsample, resnet
@@ -332,6 +332,7 @@ class Homogeneous_Poisson_NN_Legacy(tf.keras.models.Model):
 
         return out
 
+    @tf.function
     def train_step(self, data):
 
         inputs, ground_truth = data
@@ -344,6 +345,7 @@ class Homogeneous_Poisson_NN_Legacy(tf.keras.models.Model):
                 tape.watch(self.trainable_variables)
                 pred = self(inputs)
                 loss = self.loss_fn(y_true=ground_truth, y_pred=pred, rhs=rhses, dx=tf.concat([dx, dx], 1))
+            tape = hvdt.DistributedGradientTape(tape) ##working fine with tape wrapped.
             grads = tape.gradient(loss, self.trainable_variables)
         else:
             batch_size = tf.shape(rhses)[0]
@@ -360,6 +362,7 @@ class Homogeneous_Poisson_NN_Legacy(tf.keras.models.Model):
                     pred = self([step_rhs, step_dx])
                     loss = self.loss_fn(y_true=step_ground_truth, y_pred=pred, rhs=step_rhs,
                                         dx=tf.concat([step_dx, step_dx], 1))
+                tape = hvdt.DistributedGradientTape(tape)
                 grads = tape.gradient(loss, self.trainable_variables) if grads is None else [current_grads + new_grads
                                                                                              for
                                                                                              current_grads, new_grads in
@@ -642,20 +645,20 @@ if __name__ == '__main__':
     
     mod = Homogeneous_Poisson_NN_Legacy(use_batchnorm = False, pre_bottleneck_convolutions_config = pbcc, bottleneck_config = bcc, final_convolutions_config = fcc, bottleneck_upsampling = 'multilinear')
     '''
-    bsize = 1
+    bsize = 4
     rhs = 2 * tf.random.uniform((bsize, 1, 1000, 1000)) - 1
     dx = tf.random.uniform((bsize, 1))
     mod([rhs, dx])
     print(rhs, dx)
     mod.summary()
-    ntrials = 1
+    ntrials = 16
     t0 = time.time()
     for k in range(ntrials):
         t00 = time.time()
         s = mod([rhs, dx])
         t01 = time.time()
         #print(t00 - t01)
-        print(s[0][0][1])
+        # print(s[0][0][1])
         # print(tf.reduce_sum(t))
     t1 = time.time()
     print(s.shape)
