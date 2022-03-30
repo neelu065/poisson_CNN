@@ -9,6 +9,10 @@ import matplotlib.pyplot as plt
 from scipy.sparse.linalg import LinearOperator
 import scipy.sparse
 import scipy.sparse.linalg as slg
+from pyamg import smoothed_aggregation_solver
+from matplotlib import cm
+import time
+import sys
 import copy
 import structure
 
@@ -26,34 +30,39 @@ mpl.rcParams['figure.dpi'] = 300
 cfg = poisson_CNN.convert_tf_object_names(
     json.load(open('/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/poisson_CNN/experiments/hpnn.json')))
 model = poisson_CNN.models.Homogeneous_Poisson_NN_Legacy(**cfg['model'])
-_ = model([tf.random.uniform((2,1,100,100)), tf.random.uniform((2,1))])
+_ = model([tf.random.uniform((2, 1, 100, 100)), tf.random.uniform((2, 1))])
 model.compile(loss='mse', optimizer='adam')
-# model.load_weights('/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/chkpt.checkpoint')
 model.load_weights('/scratch/j20210241/hor_poisson_CNN_home/hpnn_4_gpu_test/chkpt-epoch-07.mse-0.0000')
-#
-# cfg = poisson_CNN.convert_tf_object_names(json.load(open('/poisson_CNN/poisson_CNN/experiments/hpnn_neumann_piloss_smalldomain.json')))
-# model = poisson_CNN.models.Homogeneous_Poisson_NN_Legacy(**cfg['model'])
-# _ = model([tf.random.uniform((2,1,100,100)), tf.random.uniform((2,1))])
-# model.compile(loss='mse', optimizer = 'adam')
-# model.load_weights('/storage/training-results/hpnn_legacy_neumann_smallstencil_smalldomain/chkpt.checkpoint')
-#
+# print("entrance")
+# print(a)
+mod = model
+
 
 class LinearSystem_solver:
     '''this class contains the linear system solvers for both velocity and pressure
 	it returns the linear system in Scipy sparse matrix form and linear operator form'''
-    mod = model
+    # cfg = poisson_CNN.convert_tf_object_names(
+    #     json.load(open('/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/poisson_CNN/experiments/hpnn.json')))
+    # model = poisson_CNN.models.Homogeneous_Poisson_NN_Legacy(**cfg['model'])
+    # _ = model([tf.random.uniform((2, 1, 100, 100)), tf.random.uniform((2, 1))])
+    # model.compile(loss='mse', optimizer='adam')
+    # model.load_weights('/scratch/j20210241/hor_poisson_CNN_home/hpnn_4_gpu_test/chkpt-epoch-07.mse-0.0000')
+    # print("entrance")
+    # mod = model
+    print(f"hi:{mod}")
     _timestep_counter = itertools.count(0)
 
     def __init__(self, Re, mesh, integration_method='Riemann'):
-        # self.mod = mod
+
         self._images_folder = '/scratch/j20210241/hor_poisson_CNN_home/NS_solver/plots'
+        self.mod = mod
         self.mesh = mesh
         self.Re = Re
         self.integration_method = integration_method
 
     # Linear systemas for velocities (in the form of sparse matrices)
     # It can be used for both intermediate velocity fields (u*) and Gauge variables (m)
-    # It returns both the sparse matrix system A and its linear operator 
+    # It returns both the sparse matrix system A and its linear operator
     def Linsys_velocity_matrix(self, velocity):
         m = self.mesh.m
         n = self.mesh.n
@@ -172,7 +181,7 @@ class LinearSystem_solver:
         # construct matrix A: Ap = rhs, p is pressure (with interior points)
         # Neumann boundary condition is applied
         # A is negative definite so use -A which is positive definite
-        # block matrix                       
+        # block matrix
         maindiag = np.ones(n)
         maindiag[1:n - 1] = (2 * maindiag[1:n - 1])
         sidediag = np.ones(n - 1)
@@ -220,63 +229,64 @@ class LinearSystem_solver:
         N = m * n
 
         # compute and plot ground truth
-        if solve_method == "ILU":
-            _rhs = (-rhs).get_value().reshape(m * n)
-            _rhs = np.hstack([_rhs, np.zeros(1)])
-            # use Incomplete LU to find a preconditioner
-            A_linop = precd_AL[0]
-            M = precd_AL[1]
-            A = precd_AL[2]
-            _p = scipy.sparse.linalg.bicgstab(A=A_linop, b=_rhs, tol=tol, maxiter=N, M=M)[0]
-            Ap = A * np.matrix(np.ravel(_p)).T
-            r = _rhs - np.array(Ap.T)
-            # print(np.max(np.abs(r)), "residual")
-            # print(_p[-1], 'lambda constant')
-            _p = _p[:-1]
-            _p = _p.reshape(m, n)
-            maxmag = np.max(np.abs(_p))
-            vmax, vmin = maxmag, -maxmag
-            plt.imshow(_p, extent=extent, vmax=vmax, vmin=vmin, cmap='RdBu', origin='lower')
-            plt.colorbar()
-            plt.savefig(self._images_folder + 'gt_' + str(ts) + '.png', bbox_inches='tight')
-            plt.close()
-            # p = structure.CentredPotential(p, self.mesh)
-            # print(self.mesh.integrate(p, self.integration_method), 'integral of phi')
-            # returns p (phi) variable in the form of CentredPotential object
-            # return p
+        # if solve_method == "ILU":
+        #     _rhs = (-rhs).get_value().reshape(m * n)
+        #     _rhs = np.hstack([_rhs, np.zeros(1)])
+        #     # use Incomplete LU to find a preconditioner
+        #     A_linop = precd_AL[0]
+        #     M = precd_AL[1]
+        #     A = precd_AL[2]
+        #     _p = scipy.sparse.linalg.bicgstab(A=A_linop, b=_rhs, tol=tol, maxiter=N, M=M)[0]
+        #     Ap = A * np.matrix(np.ravel(_p)).T
+        #     r = _rhs - np.array(Ap.T)
+        #     # print(np.max(np.abs(r)), "residual")
+        #     # print(_p[-1], 'lambda constant')
+        #     _p = _p[:-1]
+        #     _p = _p.reshape(m, n)
+        #     maxmag = np.max(np.abs(_p))
+        #     vmax, vmin = maxmag, -maxmag
+        #     # plt.imshow(_p, extent=extent, vmax=vmax, vmin=vmin, cmap='RdBu', origin='lower')
+        #     plt.imshow(_p, extent=extent, vmax=-0.05, vmin=0.05, cmap='RdBu', origin='lower')
+        #     plt.colorbar()
+        #     plt.savefig(self._images_folder + 'gt_' + str(ts) + '.png', bbox_inches='tight')
+        #     plt.close()
+        #     p = structure.CentredPotential(_p, self.mesh)
+        #     print(self.mesh.integrate(p, self.integration_method), 'integral of phi')
+        #     # returns p (phi) variable in the form of CentredPotential object
+        #     # return p
 
         # convert rhs into vector (m*n)
         rhs = rhs.get_value()
+        print("hi")
         trhs, sf = poisson_CNN.utils.set_max_magnitude_in_batch_and_return_scaling_factors(
             rhs.reshape([1, 1] + list(rhs.shape)).astype(np.float32), 1.0)
-        #
+
         tdx = tf.cast(tf.constant([[dx]]), tf.float32)
         trhs = tf.cast(trhs, tf.float32)
-        # pred = self.mod([trhs, tdx])
-        pred = model([trhs, tdx])
-        print(pred, trhs, tdx)
+        print(trhs)
+        pred = self.mod([trhs, tdx])
+        print(pred)
+        import pdb
+        pdb.set_trace()
         pred = (((dx * (n - 1)) ** 2) / sf) * pred
 
         plt.imshow(pred[0, 0], extent=extent, vmax=vmax, vmin=vmin, cmap='RdBu', origin='lower')
         plt.colorbar()
-        # plt.savefig(self._images_folder + 'pred_' + str(ts) +'.png', bbox_inches = 'tight')
-        # plt.close()
-        plt.show()
-        rhs = (-rhs).reshape(m * n)
-        #
-        # # add the zero integration constraint to the right hand side
-        rhs = np.hstack([rhs, np.zeros(1)])
-        #
-        #
-        x0 = np.hstack([pred.numpy().reshape(m * n), np.zeros(1)])
-        print(fr"intital_values:{x0}")
-        ##Above line is the connecting point for ML + CFD.
+        plt.savefig(self._images_folder + 'pred_' + str(ts) + '.png', bbox_inches='tight')
+        plt.close()
 
-        # x0 = np.zeros(m*n+1)
+        rhs = (-rhs).reshape(m * n)
+
+        # add the zero integration constraint to the right hand side
+        rhs = np.hstack([rhs, np.zeros(1)])
+
+        x0 = np.hstack([pred.numpy().reshape(m * n), np.zeros(1)])
+        # x0 = np.zeros(m * n + 1)
         A_linop = precd_AL[0]
         M = precd_AL[1]
         A = precd_AL[2]
         p = scipy.sparse.linalg.bicgstab(A=A_linop, b=rhs, x0=x0, tol=tol, maxiter=2, M=M)[0]
+        print(np.matrix(np.ravel(p)))
         Ap = A * np.matrix(np.ravel(p)).T
         r = rhs - np.array(Ap.T)
         print(np.max(np.abs(r)), "residual")
@@ -300,7 +310,7 @@ class LinearSystem_solver:
         plt.colorbar()
         plt.savefig('zeroinitial+bicgstab2.png')
         plt.close()
-        
+
 
         # Biconjugate gradient method
         if solve_method == "ILU":
@@ -319,7 +329,7 @@ class LinearSystem_solver:
             # print(self.mesh.integrate(p, self.integration_method), 'integral of phi')
             # returns p (phi) variable in the form of CentredPotential object
             # return p
-        
+
         # direct solve
         elif solve_method == "DIR":
             A = precd_AL
@@ -345,6 +355,7 @@ class LinearSystem_solver:
         p = structure.CentredPotential(p, self.mesh)
         return p
 
+#
 
 # below constructs the 4 different Projection method solvers (Gauge, Alg 1, Alg 2, Alg 3)
 class Gauge_method():
@@ -370,7 +381,7 @@ class Gauge_method():
 
     # initial set up
     def setup(self, InCond_uv_init, Boundary_uv_type, solve_method='ILU', integration_method='Riemann'):
-        ## InCond_uv: specifies the velocity initial condition 
+        ## InCond_uv: specifies the velocity initial condition
         linsys_solver = LinearSystem_solver(self.Re, self.mesh, integration_method)
         phi_mat = linsys_solver.Poisson_pressure_matrix(solve_method)
         m1_mat = linsys_solver.Linsys_velocity_matrix("u")
@@ -442,6 +453,7 @@ class Gauge_method():
             div_mstar = mstarcmp1.divergence()
             # solving for the phi variable
             phi = Linsys_solve.Poisson_pressure_solver(div_mstar, solve_method, phi_mat)
+            print(f"phi:{phi}")
             print(solve_method)
             if t == 0:
                 # div_mn = np.zeros((m,n))
@@ -598,7 +610,7 @@ class Gauge_method():
 
         return rhs_mstarcd
 
-    # completing the Gauge variable at time n+1 
+    # completing the Gauge variable at time n+1
     def complete_mstar(self, mstar_int, uvbnd_value, phiacd_cmp):
         # complete m* using phi^(n+1)
         n = self.n
@@ -666,7 +678,7 @@ class Alg1_method():
 
     # initial set up
     def setup(self, InCond, Boundary_uv_type, solve_method='ILU', integration_method='Riemann'):
-        ## InCond_uv: specifies the velocity initial condition 
+        ## InCond_uv: specifies the velocity initial condition
         linsys_solver = LinearSystem_solver(self.Re, self.mesh, integration_method)
         phi_mat = linsys_solver.Poisson_pressure_matrix(solve_method)
         u_mat = linsys_solver.Linsys_velocity_matrix("u")
@@ -723,7 +735,7 @@ class Alg1_method():
                 # boundary correction step
             rhs_uvstarcd = self.correct_boundary(rhs_uvstar, t + 1, Boundary_uv_type)
 
-            # solving for the intermediate velocity variable uv* 
+            # solving for the intermediate velocity variable uv*
             Linsys_solve = LinearSystem_solver(Re, self.mesh)
             uvstar = Linsys_solve.Linsys_velocity_solver([u_mat, v_mat], rhs_uvstarcd)
             uvstarcmp, uvbnd_value = structure.VelocityComplete(self.mesh, [uvstar.get_uv()[0], uvstar.get_uv()[1]],
@@ -749,7 +761,7 @@ class Alg1_method():
             print("iteration " + str(t))
         return uvn_cmp, p, gradp
 
-    # boundary correction 
+    # boundary correction
     def correct_boundary(self, rhs_uvstar, t, Boundary_type):
         # rhsuv is a VelocityField object with dimension interior u and v [(m*(n-1), (m-1)*n)]
         n = self.n
@@ -856,7 +868,7 @@ class Alg2_method():
 
     # initial set up
     def setup(self, InCond, Boundary_uv_type, solve_method='ILU', integration_method='Riemann'):
-        ## InCond_uv: specifies the velocity initial condition 
+        ## InCond_uv: specifies the velocity initial condition
         linsys_solver = LinearSystem_solver(self.Re, self.mesh, integration_method)
         phi_mat = linsys_solver.Poisson_pressure_matrix(solve_method)
         u_mat = linsys_solver.Linsys_velocity_matrix("u")
@@ -912,7 +924,7 @@ class Alg2_method():
 
                 # boundary correction step
             rhs_uvstarcd = self.correct_boundary(rhs_uvstar, t + 1, Boundary_uv_type)
-            # solving for the intermediate velocity variable uv* 
+            # solving for the intermediate velocity variable uv*
             Linsys_solve = LinearSystem_solver(Re, self.mesh)
             uvstar = Linsys_solve.Linsys_velocity_solver([u_mat, v_mat], rhs_uvstarcd)
             uvstarcmp, uvbnd_value = structure.VelocityComplete(self.mesh, [uvstar.get_uv()[0], uvstar.get_uv()[1]],
@@ -936,7 +948,7 @@ class Alg2_method():
             print("iteration " + str(t))
         return uvn_cmp, p, gradp
 
-    # boundary correction 
+    # boundary correction
     def correct_boundary(self, rhs_uvstar, t, Boundary_type):
         # rhsuv is a VelocityField object with dimension interior u and v [(m*(n-1), (m-1)*n)]
         n = self.n
@@ -1043,7 +1055,7 @@ class Alg3_method():
 
     # initial set up
     def setup(self, InCond_uv_init, Boundary_uv_type, solve_method='ILU', integration_method='Riemann'):
-        ## InCond_uv: specifies the velocity initial condition 
+        ## InCond_uv: specifies the velocity initial condition
         linsys_solver = LinearSystem_solver(self.Re, self.mesh)
         phi_mat = linsys_solver.Poisson_pressure_matrix(solve_method)
         u_mat = linsys_solver.Linsys_velocity_matrix("u")
@@ -1335,3 +1347,6 @@ class Error():
                                 'Linf': (gradperror_list[0]['Linf'] + gradperror_list[1]['Linf']) / 2}
 
         return gradperror_list[0], gradperror_list[1], avg_gradp_error_dict
+
+if __name__ == "__main__":
+    ls = LinearSystem_solver()
