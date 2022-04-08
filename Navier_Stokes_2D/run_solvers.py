@@ -9,6 +9,7 @@ from matplotlib import cm
 import structure
 import solvers
 
+
 def get_inputs():
     test_problem_dict = {1: 'Taylor', 2: 'periodic_forcing_1',
                          3: 'periodic_forcing_2', 4: 'driven_cavity'}
@@ -94,7 +95,7 @@ def get_inputs():
         else:
             Error_analysis_option = False
 
-    gridsize = '100'  # input('Enter the size of the spatial grid (default 30): ')
+    gridsize = '255'  # input('Enter the size of the spatial grid (default 30): ')
     while gridsize == '':
         # take default value
         gridsize = 30
@@ -102,6 +103,7 @@ def get_inputs():
         gridsize = int(gridsize)
     except ValueError:
         gridsize = int(input('Grid size must be integers, try again: '))
+    print(f"gridsize:{gridsize}")
 
     plot_option = 'N'  # input('plot results optional (Y/N): (default no)')
     if 'Y' in plot_option:
@@ -414,4 +416,3 @@ if __name__ == "__main__":
         print("V velocity error is %s " % Velocity_error[1])
         print("Pressure error is %s " % Pressure_error)
         print("average gradient Pressure error is %s " % avg_gradp_error)
-

@@ -27,35 +27,30 @@ mpl.rcParams['figure.dpi'] = 300
 
 # __all__ = ['LinearSystem_solver', 'Gauge_method', 'Alg1', 'Error']
 
+# cfg = poisson_CNN.convert_tf_object_names(
+#     json.load(open('/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/poisson_CNN/experiments/dbcnn.json')))
+# model = poisson_CNN.models.Dirichlet_BC_NN_Legacy_2(**cfg['model'])
+# model.compile(loss='mse', optimizer='adam')
+# model.load_weights('/scratch/j20210241/hor_poisson_CNN_home/dbcnn_4_gpu_test/chkpt-epoch-40.mse-0.0010')
+
 cfg = poisson_CNN.convert_tf_object_names(
     json.load(open('/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/poisson_CNN/experiments/hpnn.json')))
 model = poisson_CNN.models.Homogeneous_Poisson_NN_Legacy(**cfg['model'])
-_ = model([tf.random.uniform((2, 1, 100, 100)), tf.random.uniform((2, 1))])
+# _ = model([tf.random.uniform((2,1,100,100)), tf.random.uniform((2,1))])
 model.compile(loss='mse', optimizer='adam')
-model.load_weights('/scratch/j20210241/hor_poisson_CNN_home/hpnn_4_gpu_test/chkpt-epoch-07.mse-0.0000')
-# print("entrance")
-# print(a)
-mod = model
+model.load_weights('/scratch/j20210241/poisson_cnn_model_test/hpnn_legacy_train_salloc/chkpt-epoch-169.mse-0.0000')
 
 
-class LinearSystem_solver:
+class LinearSystem_solver():
     '''this class contains the linear system solvers for both velocity and pressure
 	it returns the linear system in Scipy sparse matrix form and linear operator form'''
-    # cfg = poisson_CNN.convert_tf_object_names(
-    #     json.load(open('/home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/poisson_CNN/experiments/hpnn.json')))
-    # model = poisson_CNN.models.Homogeneous_Poisson_NN_Legacy(**cfg['model'])
-    # _ = model([tf.random.uniform((2, 1, 100, 100)), tf.random.uniform((2, 1))])
-    # model.compile(loss='mse', optimizer='adam')
-    # model.load_weights('/scratch/j20210241/hor_poisson_CNN_home/hpnn_4_gpu_test/chkpt-epoch-07.mse-0.0000')
-    # print("entrance")
-    # mod = model
-    print(f"hi:{mod}")
+    mod = model
     _timestep_counter = itertools.count(0)
 
     def __init__(self, Re, mesh, integration_method='Riemann'):
 
-        self._images_folder = '/scratch/j20210241/hor_poisson_CNN_home/NS_solver/plots'
-        self.mod = mod
+        self._images_folder = '/scratch/j20210241/poisson_cnn_model_test/NS_solver/plots'
+        # self.mod = mod
         self.mesh = mesh
         self.Re = Re
         self.integration_method = integration_method
@@ -215,7 +210,8 @@ class LinearSystem_solver:
         elif solve_method == "DIR":
             return A
 
-    # Solves the Pressure Poisson problem using either Biconjugate gradient method (with ILU factorisation preconditioner) or direct solve
+    # Solves the Pressure Poisson problem using either Biconjugate gradient method (with ILU factorisation
+    # preconditioner) or direct solve
     def Poisson_pressure_solver(self, rhs, solve_method, precd_AL, tol=1e-12):
         m = self.mesh.m
         n = self.mesh.n
@@ -227,66 +223,81 @@ class LinearSystem_solver:
         # for square domain only, lx = ky and dx = dy = dh
         dh = dx
         N = m * n
+        pt = [0.9, 200]  ## Values used for plot at intervals. [final plots, intervals]
 
         # compute and plot ground truth
-        # if solve_method == "ILU":
-        #     _rhs = (-rhs).get_value().reshape(m * n)
-        #     _rhs = np.hstack([_rhs, np.zeros(1)])
-        #     # use Incomplete LU to find a preconditioner
-        #     A_linop = precd_AL[0]
-        #     M = precd_AL[1]
-        #     A = precd_AL[2]
-        #     _p = scipy.sparse.linalg.bicgstab(A=A_linop, b=_rhs, tol=tol, maxiter=N, M=M)[0]
-        #     Ap = A * np.matrix(np.ravel(_p)).T
-        #     r = _rhs - np.array(Ap.T)
-        #     # print(np.max(np.abs(r)), "residual")
-        #     # print(_p[-1], 'lambda constant')
-        #     _p = _p[:-1]
-        #     _p = _p.reshape(m, n)
-        #     maxmag = np.max(np.abs(_p))
-        #     vmax, vmin = maxmag, -maxmag
-        #     # plt.imshow(_p, extent=extent, vmax=vmax, vmin=vmin, cmap='RdBu', origin='lower')
-        #     plt.imshow(_p, extent=extent, vmax=-0.05, vmin=0.05, cmap='RdBu', origin='lower')
-        #     plt.colorbar()
-        #     plt.savefig(self._images_folder + 'gt_' + str(ts) + '.png', bbox_inches='tight')
-        #     plt.close()
-        #     p = structure.CentredPotential(_p, self.mesh)
-        #     print(self.mesh.integrate(p, self.integration_method), 'integral of phi')
-        #     # returns p (phi) variable in the form of CentredPotential object
-        #     # return p
+        if solve_method == "ILU":
+            _rhs = (-rhs).get_value().reshape(m * n)
+            _rhs = np.hstack([_rhs, np.zeros(1)])
+            # use Incomplete LU to find a preconditioner
+            A_linop = precd_AL[0]
+            M = precd_AL[1]
+            A = precd_AL[2]
+            _p = scipy.sparse.linalg.bicgstab(A=A_linop, b=_rhs, tol=tol, maxiter=N, M=M)[0]
+            Ap = A * np.matrix(np.ravel(_p)).T
+            r = _rhs - np.array(Ap.T)
+            # print(np.max(np.abs(r)), "residual")
+            # print(_p[-1], 'lambda constant')
+            _p = _p[:-1]
+            _p = _p.reshape(m, n)
+            maxmag = np.max(np.abs(_p))
+            vmax, vmin = maxmag, -maxmag
+
+            if ts / self.mesh.Tn > pt[0] or ts % int(self.mesh.Tn / pt[1]) == 0:
+                plt.imshow(_p, extent=extent, vmax=vmax, vmin=vmin, cmap='RdBu', origin='lower')
+                # plt.imshow(_p, extent=extent, vmax=0.65, vmin=-0.65, cmap='RdBu', origin='lower')
+                plt.colorbar()
+                plt.savefig(self._images_folder + 'gt_' + str(ts) + '.png', bbox_inches='tight')
+                plt.close()
+            # p = structure.CentredPotential(p, self.mesh)
+            # print(self.mesh.integrate(p, self.integration_method), 'integral of phi')
+            # returns p (phi) variable in the form of CentredPotential object
+            # return p
 
         # convert rhs into vector (m*n)
         rhs = rhs.get_value()
-        print("hi")
         trhs, sf = poisson_CNN.utils.set_max_magnitude_in_batch_and_return_scaling_factors(
             rhs.reshape([1, 1] + list(rhs.shape)).astype(np.float32), 1.0)
-
         tdx = tf.cast(tf.constant([[dx]]), tf.float32)
         trhs = tf.cast(trhs, tf.float32)
-        print(trhs)
-        pred = self.mod([trhs, tdx])
-        print(pred)
-        import pdb
-        pdb.set_trace()
+        pred = model([trhs, tdx])
         pred = (((dx * (n - 1)) ** 2) / sf) * pred
 
-        plt.imshow(pred[0, 0], extent=extent, vmax=vmax, vmin=vmin, cmap='RdBu', origin='lower')
-        plt.colorbar()
-        plt.savefig(self._images_folder + 'pred_' + str(ts) + '.png', bbox_inches='tight')
-        plt.close()
+        ##***** lines for dbcnn ******
+        # bsize = int(cfg['dataset']['batch_size'] * cfg['dataset']['batches_per_epoch'])
+        # bsize = int(cfg['dataset']['batch_size'])
+        # bsize = 1
+        # nx = 10
+        # ny = 10
+        # dx = tf.random.uniform((bsize, 1))
+        # bc = tf.random.uniform((bsize, 1, n))
+        # bc = tf.cast(tf.random.uniform((bsize, 1, n)), tf.float32)
+        # x_output_resolution = tf.constant(m, dtype=tf.int32)
+        #
+        # pred = model([bc, tdx, x_output_resolution])
+        ##***** lines for dbcnn ******
+
+
+        if ts / self.mesh.Tn > pt[0] or ts % int(self.mesh.Tn / pt[1]) == 0:
+            plt.imshow(pred[0, 0], extent=extent, vmax=vmax, vmin=vmin, cmap='RdBu', origin='lower')
+            # plt.imshow(pred[0, 0], extent=extent, vmax=0.65, vmin=-0.65, cmap='RdBu', origin='lower')
+            plt.colorbar()
+            plt.savefig(self._images_folder + 'pred_' + str(ts) + '.png', bbox_inches='tight')
+            plt.close()
 
         rhs = (-rhs).reshape(m * n)
 
         # add the zero integration constraint to the right hand side
         rhs = np.hstack([rhs, np.zeros(1)])
 
+        # x0 = np.hstack([pred.numpy().reshape(m*n*bsize), np.zeros(1)])
         x0 = np.hstack([pred.numpy().reshape(m * n), np.zeros(1)])
         # x0 = np.zeros(m * n + 1)
         A_linop = precd_AL[0]
         M = precd_AL[1]
         A = precd_AL[2]
+        # print((A_linop))
         p = scipy.sparse.linalg.bicgstab(A=A_linop, b=rhs, x0=x0, tol=tol, maxiter=2, M=M)[0]
-        print(np.matrix(np.ravel(p)))
         Ap = A * np.matrix(np.ravel(p)).T
         r = rhs - np.array(Ap.T)
         print(np.max(np.abs(r)), "residual")
@@ -294,68 +305,17 @@ class LinearSystem_solver:
         p = p[:-1]
         p = p.reshape(m, n)
 
-        plt.imshow(p, extent=extent, vmax=vmax, vmin=vmin, cmap='RdBu', origin='lower')
-        plt.colorbar()
-        plt.savefig(self._images_folder + 'pred+bicgstab1_' + str(ts) + '.png', bbox_inches='tight')
-        plt.close()
-        '''
-        p = scipy.sparse.linalg.bicgstab(A=A_linop, b=rhs, tol=tol, maxiter=2, M=M)[0]
-        Ap = A*np.matrix(np.ravel(p)).T
-        r = rhs - np.array(Ap.T)
-        print(np.max(np.abs(r)), "residual")
-        print(p[-1], 'lambda constant')
-        p = p[:-1]
-        p = p.reshape(m,n)
-        plt.imshow(p)
-        plt.colorbar()
-        plt.savefig('zeroinitial+bicgstab2.png')
-        plt.close()
-
-
-        # Biconjugate gradient method
-        if solve_method == "ILU":
-            # use Incomplete LU to find a preconditioner
-            A_linop = precd_AL[0]
-            M = precd_AL[1]
-            A = precd_AL[2]
-            p = scipy.sparse.linalg.bicgstab(A=A_linop, b=rhs, tol=tol, maxiter=N, M=M)[0]
-            Ap = A*np.matrix(np.ravel(p)).T
-            r = rhs - np.array(Ap.T)
-            print(np.max(np.abs(r)), "residual")
-            print(p[-1], 'lambda constant')
-            p = p[:-1]
-            p = p.reshape(m,n)
-            # p = structure.CentredPotential(p, self.mesh)
-            # print(self.mesh.integrate(p, self.integration_method), 'integral of phi')
-            # returns p (phi) variable in the form of CentredPotential object
-            # return p
-
-        # direct solve
-        elif solve_method == "DIR":
-            A = precd_AL
-            p = scipy.sparse.linalg.spsolve(A=A, b=rhs)
-            Ap = A*np.matrix(np.ravel(p)).T
-            r = rhs - np.array(Ap.T)
-            print(np.max(np.abs(r)), "residual")
-            print(p[-1], 'lambda constant')
-            p = p[:-1]
-            p = p.reshape(m,n)
-            # print(np.sum(p), 'integral of phi')
-            # p = structure.CentredPotential(p, self.mesh)
-
-        plt.imshow(p)
-        plt.colorbar()
-        plt.savefig('gt.png')
-        plt.close()
-        import pdb
-        pdb.set_trace()
-        '''
+        if ts / self.mesh.Tn > pt[0] or ts % int(self.mesh.Tn / pt[1]) == 0:
+            # plt.imshow(p, extent=extent, vmax = 0.65, vmin = -0.65, cmap='RdBu', origin='lower')
+            plt.imshow(p, extent=extent, vmax=vmax, vmin=vmin, cmap='RdBu', origin='lower')
+            plt.colorbar()
+            plt.savefig(self._images_folder + 'pred+bicgstab1_' + str(ts) + '.png', bbox_inches='tight')
+            plt.close()
 
         # returns p (phi) variable in the form of CentredPotential object
         p = structure.CentredPotential(p, self.mesh)
         return p
 
-#
 
 # below constructs the 4 different Projection method solvers (Gauge, Alg 1, Alg 2, Alg 3)
 class Gauge_method():
@@ -453,7 +413,6 @@ class Gauge_method():
             div_mstar = mstarcmp1.divergence()
             # solving for the phi variable
             phi = Linsys_solve.Poisson_pressure_solver(div_mstar, solve_method, phi_mat)
-            print(f"phi:{phi}")
             print(solve_method)
             if t == 0:
                 # div_mn = np.zeros((m,n))
@@ -654,626 +613,8 @@ class Gauge_method():
         return structure.VelocityField(m1star_cmp, m2star_cmp, self.mesh)
 
 
-class Alg1_method():
-    '''This class constructs the Alg 1 method solver
-       Note that this solver is inherently first order accurate in time for the pressure variable because its pressure update formula limits the accuracy'''
-
-    def __init__(self, Re, mesh):
-        self.Re = Re
-        self.n = mesh.n
-        self.m = mesh.m
-        self.xu = mesh.xu
-        self.yu = mesh.yu
-        self.xv = mesh.xv
-        self.yv = mesh.yv
-        self.gds = mesh.gds
-        self.sdomain = mesh.sdomain
-        self.tdomain = mesh.tdomain
-        self.Tn = mesh.Tn
-        self.t0 = mesh.tdomain[0]
-        self.dt = mesh.dt
-        self.dx = mesh.dx
-        self.dy = mesh.dy
-        self.mesh = mesh
-
-    # initial set up
-    def setup(self, InCond, Boundary_uv_type, solve_method='ILU', integration_method='Riemann'):
-        ## InCond_uv: specifies the velocity initial condition
-        linsys_solver = LinearSystem_solver(self.Re, self.mesh, integration_method)
-        phi_mat = linsys_solver.Poisson_pressure_matrix(solve_method)
-        u_mat = linsys_solver.Linsys_velocity_matrix("u")
-        v_mat = linsys_solver.Linsys_velocity_matrix("v")
-
-        InCond_uvcmp = structure.VelocityComplete(self.mesh, InCond[0], 0).complete(Boundary_uv_type)
-        uvn_cmp = copy.copy(InCond_uvcmp)
-        InCond_p = structure.CentredPotential(InCond[1], self.mesh)
-        initial_setup_parameters = [phi_mat, u_mat, v_mat, InCond_uvcmp, uvn_cmp, InCond_p, integration_method,
-                                    solve_method]
-        return initial_setup_parameters
-
-    def iterative_solver(self, Boundary_uv_type, Tn, initial_setup_parameters):
-        n = self.n
-        m = self.m
-        dx = self.dx
-        dy = self.dy
-        dt = self.dt
-        Re = self.Re
-        phi_mat = initial_setup_parameters[0]
-        u_mat = initial_setup_parameters[1]
-        v_mat = initial_setup_parameters[2]
-        # uvold_cmp: u and v velocity fields at time n-1
-        # cmp: in the completed format (interior + boundary + ghost nodes)
-        uvold_cmp = initial_setup_parameters[3]
-        # uvn_cmp: u and v at time n
-        uvn_cmp = initial_setup_parameters[4]
-        pold = initial_setup_parameters[5]
-        integration_method = initial_setup_parameters[6]
-        solve_method = initial_setup_parameters[7]
-        pn = copy.copy(pold)
-
-        print(Tn, "number of iterations")
-        # main iterative solver
-        test_problem_name = Boundary_uv_type
-        for t in range(Tn):
-            forcing_term = structure.Forcing_term(self.mesh, test_problem_name, t + 0.5).select_forcing_term()
-            convc_uv = uvn_cmp.non_linear_convection()
-            preconvc_uv = uvold_cmp.non_linear_convection()
-            diff_uvn = uvn_cmp.diffusion()
-            gradp_uvn = pn.gradient()
-            uvn_int = structure.VelocityField(uvn_cmp.get_int_uv()[0], uvn_cmp.get_int_uv()[1], self.mesh)
-            if Boundary_uv_type == 'periodic_forcing_1':
-                # Stokes problem
-                rhs_uvstar = uvn_int + dt * (- gradp_uvn + (1.0 / (2 * Re)) * diff_uvn + forcing_term)
-            elif Boundary_uv_type == 'periodic_forcing_2':
-                # Stokes problem
-                rhs_uvstar = uvn_int + dt * (- gradp_uvn + (1.0 / (2 * Re)) * diff_uvn + forcing_term)
-            else:
-                # full Navier Stokes problem
-                rhs_uvstar = uvn_int + dt * (-1.5 * convc_uv + 0.5 * preconvc_uv - gradp_uvn + (
-                        1.0 / (2 * Re)) * diff_uvn + forcing_term)
-
-                # boundary correction step
-            rhs_uvstarcd = self.correct_boundary(rhs_uvstar, t + 1, Boundary_uv_type)
-
-            # solving for the intermediate velocity variable uv*
-            Linsys_solve = LinearSystem_solver(Re, self.mesh)
-            uvstar = Linsys_solve.Linsys_velocity_solver([u_mat, v_mat], rhs_uvstarcd)
-            uvstarcmp, uvbnd_value = structure.VelocityComplete(self.mesh, [uvstar.get_uv()[0], uvstar.get_uv()[1]],
-                                                                t + 1).complete(Boundary_uv_type, return_bnd=True)
-            div_uvstar = uvstarcmp.divergence()
-
-            # solving for the phi variable
-            phi = Linsys_solve.Poisson_pressure_solver(div_uvstar / dt, solve_method, phi_mat)
-            # pressure correction step
-            # note this formula makes the perssure variable first order accurate in time
-            p = pn + phi
-            print(self.mesh.integrate(p, integration_method), 'integral of p')
-            gradp = p.gradient()
-            pold = copy.copy(pn)
-            pn = copy.copy(p)
-
-            # velocity update step
-            gradphi = phi.gradient()
-            uvn_int = uvstar - dt * gradphi
-            uvold_cmp = copy.copy(uvn_cmp)
-            uvn_cmp = structure.VelocityComplete(self.mesh, [uvn_int.get_uv()[0], uvn_int.get_uv()[1]], t + 1).complete(
-                Boundary_uv_type)
-            print("iteration " + str(t))
-        return uvn_cmp, p, gradp
-
-    # boundary correction
-    def correct_boundary(self, rhs_uvstar, t, Boundary_type):
-        # rhsuv is a VelocityField object with dimension interior u and v [(m*(n-1), (m-1)*n)]
-        n = self.n
-        m = self.m
-        Re = self.Re
-        dx = self.dx
-        dy = self.dy
-        dt = self.dt
-
-        lam = dt / (2.0 * Re)
-        VC = structure.VelocityComplete(self.mesh, [rhs_uvstar.get_uv()[0], rhs_uvstar.get_uv()[1]], t)
-
-        if Boundary_type == "driven_cavity":
-            uN = VC.bnd_driven_cavity('u')['N']
-            uS = VC.bnd_driven_cavity('u')['S']
-            uW = VC.bnd_driven_cavity('u')['W']
-            uE = VC.bnd_driven_cavity('u')['E']
-
-            vN = VC.bnd_driven_cavity('v')['N']
-            vS = VC.bnd_driven_cavity('v')['S']
-            vW = VC.bnd_driven_cavity('v')['W']
-            vE = VC.bnd_driven_cavity('v')['E']
-
-        elif Boundary_type == "Taylor":
-            uN = VC.bnd_Taylor('u')['N'][1:n]
-            uS = VC.bnd_Taylor('u')['S'][1:n]
-            uW = VC.bnd_Taylor('u')['W']
-            uE = VC.bnd_Taylor('u')['E']
-
-            vN = VC.bnd_Taylor('v')['N']
-            vS = VC.bnd_Taylor('v')['S']
-            vW = VC.bnd_Taylor('v')['W'][1:m]
-            vE = VC.bnd_Taylor('v')['E'][1:m]
-        elif Boundary_type == "periodic_forcing_1":
-            uN = VC.bnd_forcing_1('u')['N'][1:n]
-            uS = VC.bnd_forcing_1('u')['S'][1:n]
-            uW = VC.bnd_forcing_1('u')['W']
-            uE = VC.bnd_forcing_1('u')['E']
-
-            vN = VC.bnd_forcing_1('v')['N']
-            vS = VC.bnd_forcing_1('v')['S']
-            vW = VC.bnd_forcing_1('v')['W'][1:m]
-            vE = VC.bnd_forcing_1('v')['E'][1:m]
-
-        elif Boundary_type == "periodic_forcing_2":
-            uN = VC.bnd_forcing_2('u')['N'][1:n]
-            uS = VC.bnd_forcing_2('u')['S'][1:n]
-            uW = VC.bnd_forcing_2('u')['W']
-            uE = VC.bnd_forcing_2('u')['E']
-
-            vN = VC.bnd_forcing_2('v')['N']
-            vS = VC.bnd_forcing_2('v')['S']
-            vW = VC.bnd_forcing_2('v')['W'][1:m]
-            vE = VC.bnd_forcing_2('v')['E'][1:m]
-
-        # North and South boundary
-        resu1 = np.zeros((m, n - 1))
-        resu2 = np.zeros((m, n - 1))
-        resu1[0, :] = (16.0 / 5) * uN * (lam / (dy ** 2))
-        resu1[-1, :] = (16.0 / 5) * uS * (lam / (dy ** 2))
-
-        # West and East boundary
-        resu2[:, 0] = uW * (lam / (dx ** 2))
-        resu2[:, -1] = uE * (lam / (dx ** 2))
-        resu = resu1 + resu2
-
-        resv1 = np.zeros((m - 1, n))
-        resv2 = np.zeros((m - 1, n))
-
-        # North and South boundary
-        resv2[0, :] = vN * (lam / (dy ** 2))
-        resv2[-1, :] = vS * (lam / (dy ** 2))
-
-        # West and East boundary
-        resv1[:, 0] = (16.0 / 5) * vW * (lam / (dx ** 2))
-        resv1[:, -1] = (16.0 / 5) * vE * (lam / (dx ** 2))
-
-        resv = resv1 + resv2
-        rhs_uvstarcd = rhs_uvstar + [resu, resv]
-
-        return rhs_uvstarcd
-
-
-class Alg2_method():
-    '''This class constructs the Alg 2 method solver'''
-
-    def __init__(self, Re, mesh):
-        self.Re = Re
-        self.n = mesh.n
-        self.m = mesh.m
-        self.xu = mesh.xu
-        self.yu = mesh.yu
-        self.xv = mesh.xv
-        self.yv = mesh.yv
-        self.gds = mesh.gds
-        self.sdomain = mesh.sdomain
-        self.tdomain = mesh.tdomain
-        self.Tn = mesh.Tn
-        self.t0 = mesh.tdomain[0]
-        self.dt = mesh.dt
-        self.dx = mesh.dx
-        self.dy = mesh.dy
-        self.mesh = mesh
-
-    # initial set up
-    def setup(self, InCond, Boundary_uv_type, solve_method='ILU', integration_method='Riemann'):
-        ## InCond_uv: specifies the velocity initial condition
-        linsys_solver = LinearSystem_solver(self.Re, self.mesh, integration_method)
-        phi_mat = linsys_solver.Poisson_pressure_matrix(solve_method)
-        u_mat = linsys_solver.Linsys_velocity_matrix("u")
-        v_mat = linsys_solver.Linsys_velocity_matrix("v")
-
-        InCond_uvcmp = structure.VelocityComplete(self.mesh, InCond[0], 0).complete(Boundary_uv_type)
-        uvn_cmp = copy.copy(InCond_uvcmp)
-        InCond_p = structure.CentredPotential(InCond[1], self.mesh)
-        initial_setup_parameters = [phi_mat, u_mat, v_mat, InCond_uvcmp, uvn_cmp, InCond_p, integration_method,
-                                    solve_method]
-        return initial_setup_parameters
-
-    def iterative_solver(self, Boundary_uv_type, Tn, initial_setup_parameters):
-        n = self.n
-        m = self.m
-        dx = self.dx
-        dy = self.dy
-        dt = self.dt
-        Re = self.Re
-        phi_mat = initial_setup_parameters[0]
-        u_mat = initial_setup_parameters[1]
-        v_mat = initial_setup_parameters[2]
-        # uvold_cmp: u and v velocity fields at time n-1
-        # cmp: in the completed format (interior + boundary + ghost nodes)
-        uvold_cmp = initial_setup_parameters[3]
-        # uvn_cmp: u and v at time n
-        uvn_cmp = initial_setup_parameters[4]
-        pold = initial_setup_parameters[5]
-        integration_method = initial_setup_parameters[6]
-        solve_method = initial_setup_parameters[7]
-        pn = copy.copy(pold)
-
-        print(Tn, "number of iterations")
-        # main iterative solver
-        test_problem_name = Boundary_uv_type
-        for t in range(Tn):
-            forcing_term = structure.Forcing_term(self.mesh, test_problem_name, t + 0.5).select_forcing_term()
-            convc_uv = uvn_cmp.non_linear_convection()
-            preconvc_uv = uvold_cmp.non_linear_convection()
-            diff_uvn = uvn_cmp.diffusion()
-            gradp_uvn = pn.gradient()
-            uvn_int = structure.VelocityField(uvn_cmp.get_int_uv()[0], uvn_cmp.get_int_uv()[1], self.mesh)
-            if Boundary_uv_type == 'periodic_forcing_1':
-                # Stokes problem
-                rhs_uvstar = uvn_int + dt * (- gradp_uvn + (1.0 / (2 * Re)) * diff_uvn + forcing_term)
-            elif Boundary_uv_type == 'periodic_forcing_2':
-                # Stokes problem
-                rhs_uvstar = uvn_int + dt * (- gradp_uvn + (1.0 / (2 * Re)) * diff_uvn + forcing_term)
-            else:
-                # full Navier Stokes problem
-                rhs_uvstar = uvn_int + dt * (-1.5 * convc_uv + 0.5 * preconvc_uv - gradp_uvn + (
-                        1.0 / (2 * Re)) * diff_uvn + forcing_term)
-
-                # boundary correction step
-            rhs_uvstarcd = self.correct_boundary(rhs_uvstar, t + 1, Boundary_uv_type)
-            # solving for the intermediate velocity variable uv*
-            Linsys_solve = LinearSystem_solver(Re, self.mesh)
-            uvstar = Linsys_solve.Linsys_velocity_solver([u_mat, v_mat], rhs_uvstarcd)
-            uvstarcmp, uvbnd_value = structure.VelocityComplete(self.mesh, [uvstar.get_uv()[0], uvstar.get_uv()[1]],
-                                                                t + 1).complete(Boundary_uv_type, return_bnd=True)
-            div_uvstar = uvstarcmp.divergence()
-
-            # solving for the phi variable
-            phi = Linsys_solve.Poisson_pressure_solver(div_uvstar / dt, solve_method, phi_mat)
-            # pressure correction step
-            p = pn + phi - div_uvstar / (2 * Re)
-            print(self.mesh.integrate(p, integration_method), 'integral of p')
-            gradp = p.gradient()
-            pold = copy.copy(pn)
-            pn = copy.copy(p)
-            # velocity update stemp
-            gradphi = phi.gradient()
-            uvn_int = uvstar - dt * gradphi
-            uvold_cmp = copy.copy(uvn_cmp)
-            uvn_cmp = structure.VelocityComplete(self.mesh, [uvn_int.get_uv()[0], uvn_int.get_uv()[1]], t + 1).complete(
-                Boundary_uv_type)
-            print("iteration " + str(t))
-        return uvn_cmp, p, gradp
-
-    # boundary correction
-    def correct_boundary(self, rhs_uvstar, t, Boundary_type):
-        # rhsuv is a VelocityField object with dimension interior u and v [(m*(n-1), (m-1)*n)]
-        n = self.n
-        m = self.m
-        Re = self.Re
-        dx = self.dx
-        dy = self.dy
-        dt = self.dt
-
-        lam = dt / (2.0 * Re)
-        VC = structure.VelocityComplete(self.mesh, [rhs_uvstar.get_uv()[0], rhs_uvstar.get_uv()[1]], t)
-
-        if Boundary_type == "driven_cavity":
-            uN = VC.bnd_driven_cavity('u')['N']
-            uS = VC.bnd_driven_cavity('u')['S']
-            uW = VC.bnd_driven_cavity('u')['W']
-            uE = VC.bnd_driven_cavity('u')['E']
-
-            vN = VC.bnd_driven_cavity('v')['N']
-            vS = VC.bnd_driven_cavity('v')['S']
-            vW = VC.bnd_driven_cavity('v')['W']
-            vE = VC.bnd_driven_cavity('v')['E']
-
-        elif Boundary_type == "Taylor":
-            uN = VC.bnd_Taylor('u')['N'][1:n]
-            uS = VC.bnd_Taylor('u')['S'][1:n]
-            uW = VC.bnd_Taylor('u')['W']
-            uE = VC.bnd_Taylor('u')['E']
-
-            vN = VC.bnd_Taylor('v')['N']
-            vS = VC.bnd_Taylor('v')['S']
-            vW = VC.bnd_Taylor('v')['W'][1:m]
-            vE = VC.bnd_Taylor('v')['E'][1:m]
-        elif Boundary_type == "periodic_forcing_1":
-            uN = VC.bnd_forcing_1('u')['N'][1:n]
-            uS = VC.bnd_forcing_1('u')['S'][1:n]
-            uW = VC.bnd_forcing_1('u')['W']
-            uE = VC.bnd_forcing_1('u')['E']
-
-            vN = VC.bnd_forcing_1('v')['N']
-            vS = VC.bnd_forcing_1('v')['S']
-            vW = VC.bnd_forcing_1('v')['W'][1:m]
-            vE = VC.bnd_forcing_1('v')['E'][1:m]
-
-        elif Boundary_type == "periodic_forcing_2":
-            uN = VC.bnd_forcing_2('u')['N'][1:n]
-            uS = VC.bnd_forcing_2('u')['S'][1:n]
-            uW = VC.bnd_forcing_2('u')['W']
-            uE = VC.bnd_forcing_2('u')['E']
-
-            vN = VC.bnd_forcing_2('v')['N']
-            vS = VC.bnd_forcing_2('v')['S']
-            vW = VC.bnd_forcing_2('v')['W'][1:m]
-            vE = VC.bnd_forcing_2('v')['E'][1:m]
-
-        # North and South boundary
-        resu1 = np.zeros((m, n - 1))
-        resu2 = np.zeros((m, n - 1))
-        resu1[0, :] = (16.0 / 5) * uN * (lam / (dy ** 2))
-        resu1[-1, :] = (16.0 / 5) * uS * (lam / (dy ** 2))
-
-        # West and East boundary
-        resu2[:, 0] = uW * (lam / (dx ** 2))
-        resu2[:, -1] = uE * (lam / (dx ** 2))
-        resu = resu1 + resu2
-
-        resv1 = np.zeros((m - 1, n))
-        resv2 = np.zeros((m - 1, n))
-
-        # North and South boundary
-        resv2[0, :] = vN * (lam / (dy ** 2))
-        resv2[-1, :] = vS * (lam / (dy ** 2))
-
-        # West and East boundary
-        resv1[:, 0] = (16.0 / 5) * vW * (lam / (dx ** 2))
-        resv1[:, -1] = (16.0 / 5) * vE * (lam / (dx ** 2))
-
-        resv = resv1 + resv2
-        rhs_uvstarcd = rhs_uvstar + [resu, resv]
-
-        return rhs_uvstarcd
-
-
-class Alg3_method():
-    '''This class constructs the Alg2 method (pressure free) solver'''
-
-    def __init__(self, Re, mesh):
-        self.Re = Re
-        self.n = mesh.n
-        self.m = mesh.m
-        self.xu = mesh.xu
-        self.yu = mesh.yu
-        self.xv = mesh.xv
-        self.yv = mesh.yv
-        self.gds = mesh.gds
-        self.sdomain = mesh.sdomain
-        self.tdomain = mesh.tdomain
-        self.Tn = mesh.Tn
-        self.t0 = mesh.tdomain[0]
-        self.dt = mesh.dt
-        self.dx = mesh.dx
-        self.dy = mesh.dy
-        self.mesh = mesh
-
-    # initial set up
-    def setup(self, InCond_uv_init, Boundary_uv_type, solve_method='ILU', integration_method='Riemann'):
-        ## InCond_uv: specifies the velocity initial condition
-        linsys_solver = LinearSystem_solver(self.Re, self.mesh)
-        phi_mat = linsys_solver.Poisson_pressure_matrix(solve_method)
-        u_mat = linsys_solver.Linsys_velocity_matrix("u")
-        v_mat = linsys_solver.Linsys_velocity_matrix("v")
-
-        InCond_uvcmp = structure.VelocityComplete(self.mesh, InCond_uv_init, 0).complete(Boundary_uv_type)
-        uv_cmp = copy.copy(InCond_uvcmp)
-        initial_setup_parameters = [phi_mat, u_mat, v_mat, InCond_uvcmp, uv_cmp, integration_method, solve_method]
-        return initial_setup_parameters
-
-    def iterative_solver(self, Boundary_uv_type, Tn, initial_setup_parameters):
-        n = self.n
-        m = self.m
-        dx = self.dx
-        dy = self.dy
-        dt = self.dt
-        Re = self.Re
-        phi_mat = initial_setup_parameters[0]
-        u_mat = initial_setup_parameters[1]
-        v_mat = initial_setup_parameters[2]
-        # uvold_cmp: u and v velocity fields at time n-1
-        # cmp: in the completed format (interior + boundary + ghost nodes)
-        uvold_cmp = initial_setup_parameters[3]
-        # uvn_cmp: u and v at time n
-        uvn_cmp = initial_setup_parameters[4]
-        integration_method = initial_setup_parameters[5]
-        solve_method = initial_setup_parameters[6]
-        # int: interior points only
-        uvn_int = structure.VelocityField(uvn_cmp.get_int_uv()[0], uvn_cmp.get_int_uv()[1], self.mesh)
-        # phiold: phi variable at time n-1
-        phiold = np.zeros((m, n))
-        phiold_cmp = structure.CentredPotential(phiold, self.mesh).complete()
-        # phin_cmp: phi variable at time n
-        phin_cmp = np.copy(phiold_cmp)
-
-        print(Tn, "number of iterations")
-        # main iterative solver
-        test_problem_name = Boundary_uv_type
-        for t in range(Tn):
-            forcing_term = structure.Forcing_term(self.mesh, test_problem_name, t + 0.5).select_forcing_term()
-            convc_uv = uvn_cmp.non_linear_convection()
-            preconvc_uv = uvold_cmp.non_linear_convection()
-            diff_uvn = uvn_cmp.diffusion()
-            if Boundary_uv_type == 'periodic_forcing_1':
-                # Stokes problem
-                rhs_uvstar = uvn_int + dt * ((1.0 / (2 * Re)) * diff_uvn + forcing_term)
-            elif Boundary_uv_type == 'periodic_forcing_2':
-                # Stokes problem
-                rhs_uvstar = uvn_int + dt * ((1.0 / (2 * Re)) * diff_uvn + forcing_term)
-            else:
-                # full Navier Stokes problem
-                rhs_uvstar = uvn_int + dt * (
-                        -1.5 * convc_uv + 0.5 * preconvc_uv + (1.0 / (2 * Re)) * diff_uvn + forcing_term)
-
-                # calculate the approximation to phi at time n+1
-            gradphiuv = self.gradphi_app(phiold_cmp, phin_cmp)
-            # boundary correction step
-            rhs_uvstarcd = self.correct_boundary(rhs_uvstar, t + 1, Boundary_uv_type, gradphiuv)
-            # solving for the intermediate velocity variable uv*
-            Linsys_solve = LinearSystem_solver(Re, self.mesh)
-            uvstar = Linsys_solve.Linsys_velocity_solver([u_mat, v_mat], rhs_uvstarcd)
-            uvstarcmp = structure.VelocityComplete(self.mesh, [uvstar.get_uv()[0], uvstar.get_uv()[1]], t + 1).complete(
-                Boundary_uv_type)
-            div_uvstar = uvstarcmp.divergence()
-
-            # solving for the phi variable
-            phi = Linsys_solve.Poisson_pressure_solver(div_uvstar / dt, solve_method, phi_mat)
-            # pressure correction step
-            p = phi - div_uvstar / (2 * Re)
-            print(self.mesh.integrate(p, integration_method), 'integral of p')
-
-            gradp = p.gradient()
-            phiold_cmp = np.copy(phin_cmp)
-            phin_cmp = np.copy(phi.complete())
-            # velocity update stemp
-            gradphi = phi.gradient()
-            uvn_int = uvstar - dt * gradphi
-            uvold_cmp = copy.copy(uvn_cmp)
-            uvn_cmp = structure.VelocityComplete(self.mesh, [uvn_int.get_uv()[0], uvn_int.get_uv()[1]], t + 1).complete(
-                Boundary_uv_type)
-            print("iteration " + str(t))
-            # break
-        return uvn_cmp, p, gradp
-
-    ## this function calculates graident of phi at time n+1
-    # using second order approximation to gradient of phi^(n+1). Used in correcting uv*
-    # phi^{n+1} appro 2*phi^n - phi^{n-1}
-    def gradphi_app(self, phiold_cmp, phin_cmp):
-        n = self.n
-        m = self.m
-        dx = self.dx
-        dy = self.dy
-        dt = self.dt
-
-        phiapp_cmp = 2 * phin_cmp - phiold_cmp
-        gradphiu = (phiapp_cmp[:, 1:n + 2] - phiapp_cmp[:, 0:n + 1]) / dx
-        gradphiv = (phiapp_cmp[1:m + 2, :] - phiapp_cmp[0:m + 1, :]) / dy
-        # obtain gradphiu North and South boundary by cubic interpolation
-        gradphiuN = 5.0 / 16 * (gradphiu[0, :] + 3 * gradphiu[1, :] - gradphiu[2, :] + 0.2 * gradphiu[3, :])
-        gradphiuS = 5.0 / 16 * (gradphiu[-1, :] + 3 * gradphiu[-2, :] - gradphiu[-3, :] + 0.2 * gradphiu[-4, :])
-        gradphiu[0, :] = gradphiuN
-        gradphiu[-1, :] = gradphiuS
-
-        # obtain gradphiv West and East boundary by cubic interpolation
-        gradphivW = 5.0 / 16 * (gradphiv[:, 0] + 3 * gradphiv[:, 1] - gradphiv[:, 2] + 0.2 * gradphiv[:, 3])
-        gradphivE = 5.0 / 16 * (gradphiv[:, -1] + 3 * gradphiv[:, -2] - gradphiv[:, -3] + 0.2 * gradphiv[:, -4])
-        gradphiv[:, 0] = gradphivW
-        gradphiv[:, -1] = gradphivE
-        return [gradphiu, gradphiv]
-
-    # boundary correction used in solving for the intermediate velocity field (uv*)
-    def correct_boundary(self, rhs_uvstar, t, Boundary_type, gradphiuv):
-        # rhsuv is a VelocityField object with dimension interior u and v [(m*(n-1), (m-1)*n)]
-        n = self.n
-        m = self.m
-        Re = self.Re
-        dx = self.dx
-        dy = self.dy
-        dt = self.dt
-
-        lam = dt / (2.0 * Re)
-        VC = structure.VelocityComplete(self.mesh, [rhs_uvstar.get_uv()[0], rhs_uvstar.get_uv()[1]], t)
-        gradphiu = gradphiuv[0]
-        gradphiv = gradphiuv[1]
-
-        if Boundary_type == "driven_cavity":
-            uN = VC.bnd_driven_cavity('u')['N']
-            uS = VC.bnd_driven_cavity('u')['S']
-            uW = VC.bnd_driven_cavity('u')['W']
-            uE = VC.bnd_driven_cavity('u')['E']
-
-            vN = VC.bnd_driven_cavity('v')['N']
-            vS = VC.bnd_driven_cavity('v')['S']
-            vW = VC.bnd_driven_cavity('v')['W']
-            vE = VC.bnd_driven_cavity('v')['E']
-
-        elif Boundary_type == "Taylor":
-            uN = VC.bnd_Taylor('u')['N'][1:n]
-            uS = VC.bnd_Taylor('u')['S'][1:n]
-            uW = VC.bnd_Taylor('u')['W']
-            uE = VC.bnd_Taylor('u')['E']
-
-            vN = VC.bnd_Taylor('v')['N']
-            vS = VC.bnd_Taylor('v')['S']
-            vW = VC.bnd_Taylor('v')['W'][1:m]
-            vE = VC.bnd_Taylor('v')['E'][1:m]
-
-        elif Boundary_type == "periodic_forcing_1":
-            uN = VC.bnd_forcing_1('u')['N'][1:n]
-            uS = VC.bnd_forcing_1('u')['S'][1:n]
-            uW = VC.bnd_forcing_1('u')['W']
-            uE = VC.bnd_forcing_1('u')['E']
-
-            vN = VC.bnd_forcing_1('v')['N']
-            vS = VC.bnd_forcing_1('v')['S']
-            vW = VC.bnd_forcing_1('v')['W'][1:m]
-            vE = VC.bnd_forcing_1('v')['E'][1:m]
-
-        elif Boundary_type == "periodic_forcing_2":
-            uN = VC.bnd_forcing_2('u')['N'][1:n]
-            uS = VC.bnd_forcing_2('u')['S'][1:n]
-            uW = VC.bnd_forcing_2('u')['W']
-            uE = VC.bnd_forcing_2('u')['E']
-
-            vN = VC.bnd_forcing_2('v')['N']
-            vS = VC.bnd_forcing_2('v')['S']
-            vW = VC.bnd_forcing_2('v')['W'][1:m]
-            vE = VC.bnd_forcing_2('v')['E'][1:m]
-
-        gradphiuW = gradphiu[1:m + 1, 0]
-        gradphiuE = gradphiu[1:m + 1, -1]
-        gradphiuN = gradphiu[0, 1:n]
-        gradphiuS = gradphiu[-1, 1:n]
-
-        # North and South boundary
-        uNbc = uN + dt * gradphiuN
-        uSbc = uS + dt * gradphiuS
-
-        resu1 = np.zeros((m, n - 1))
-        resu2 = np.zeros((m, n - 1))
-        resu1[0, :] = (16.0 / 5) * (uNbc) * (lam / (dy ** 2))
-        resu1[-1, :] = (16.0 / 5) * (uSbc) * (lam / (dy ** 2))
-
-        # West and East boundary
-        uWbc = uW
-        uEbc = uE
-        resu2[:, 0] = (uWbc) * (lam / (dx ** 2))
-        resu2[:, -1] = (uEbc) * (lam / (dx ** 2))
-        resu = resu1 + resu2
-
-        resv1 = np.zeros((m - 1, n))
-        resv2 = np.zeros((m - 1, n))
-
-        gradphivN = gradphiv[0, 1:n + 1]
-        gradphivS = gradphiv[-1, 1:n + 1]
-        gradphivW = gradphiv[1:m, 0]
-        gradphivE = gradphiv[1:m, -1]
-
-        # North and South boundary
-        vNbc = vN
-        vSbc = vS
-        resv2[0, :] = vNbc * (lam / (dy ** 2))
-        resv2[-1, :] = vSbc * (lam / (dy ** 2))
-
-        # West and East boundary
-        vWbc = vW + dt * gradphivW
-        vEbc = vE + dt * gradphivE
-        resv1[:, 0] = (16.0 / 5) * vWbc * (lam / (dx ** 2))
-        resv1[:, -1] = (16.0 / 5) * vEbc * (lam / (dx ** 2))
-
-        resv = resv1 + resv2
-        rhs_uvstarcd = rhs_uvstar + [resu, resv]
-
-        return rhs_uvstarcd
-
-
-class Error():
-    ''' This class calculates the error norms for the solver by comparing the numerical and analyticalsolutions'''
+class Error:
+    """ This class calculates the error norms for the solver by comparing the numerical and analyticalsolutions"""
 
     def __init__(self, uv_cmp, uv_exact_bnd, p, p_exact, gradp, gradp_exact, div_uv, mesh):
         self.mesh = mesh
@@ -1318,7 +659,7 @@ class Error():
         perror = self.p - self.p_exact
         pv = np.ravel(perror.get_value())
         a = sum(abs(pv[:]) ** 2) / (m ** 2)
-        #	L2p = np.sqrt(sum(pv[:]**2))/(m**2)
+        #L2p = np.sqrt(sum(pv[:]**2))/(m**2)
         Linfp = abs(pv[:]).max()
         L1p = sum(abs(pv[:])) / (m ** 2)
         L2p = np.sqrt(a)
@@ -1347,6 +688,3 @@ class Error():
                                 'Linf': (gradperror_list[0]['Linf'] + gradperror_list[1]['Linf']) / 2}
 
         return gradperror_list[0], gradperror_list[1], avg_gradp_error_dict
-
-if __name__ == "__main__":
-    ls = LinearSystem_solver()

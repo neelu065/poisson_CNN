@@ -30,13 +30,14 @@ class mesh:
         self.tdomain = time_domain
         self.CFL = CFL
         # dx, dy: delta x and delta y
-        self.dx = abs(float(self.sdomain[0][1] - self.sdomain[0][0])) / self.n
-        self.dy = abs(float(self.sdomain[1][1] - self.sdomain[1][0])) / self.m
+        self.dx = abs(float(self.sdomain[0][1] - self.sdomain[0][0])) / self.m
+        self.dy = abs(float(self.sdomain[1][1] - self.sdomain[1][0])) / self.n
         # dt: delta t
-        #        self.dt1 = abs(((self.sdomain[0][1] - self.sdomain[0][0])/self.gds[0])*CFL)
+        #self.dt1 = abs(((self.sdomain[0][1] - self.sdomain[0][0])/self.gds[0])*CFL)
         self.dt1 = CFL / (1.0 / self.dx + 1.0 / self.dy)
         # tn: number of iterations
-        self.Tn = 3 #int(round(self.tdomain[1] / self.dt1))
+        self.Tn = int(round(self.tdomain[1] / self.dt1))
+        # self.Tn = 30 #int(round(self.tdomain[1] / self.dt1))
         self.dt = abs(float(self.tdomain[1] - self.tdomain[0])) / self.Tn
         # xu, yu: horizontal velocity grids
         # xv, yvv: vertical velocity grids
