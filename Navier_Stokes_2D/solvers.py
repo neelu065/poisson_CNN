@@ -223,7 +223,7 @@ class LinearSystem_solver():
         # for square domain only, lx = ky and dx = dy = dh
         dh = dx
         N = m * n
-        pt = [0.9, 200]  ## Values used for plot at intervals. [final plots, intervals]
+        pt = [0.95, 50]  ## Values used for plot at intervals. [final plots, intervals]
 
         # compute and plot ground truth
         if solve_method == "ILU":
