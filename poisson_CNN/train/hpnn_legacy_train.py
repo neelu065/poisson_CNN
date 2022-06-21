@@ -2,8 +2,10 @@ import argparse, json, os
 os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 os.environ['NCCL_DEBUG'] = 'INFO'
 import tensorflow as tf
-#physical_devices = tf.config.list_physical_devices('GPU') 
-#tf.config.experimental.set_memory_growth(physical_devices[0], True)
+import pickle
+# physical_devices = tf.config.list_physical_devices('GPU')
+# tf.config.experimental.set_memory_growth(physical_devices[0], True)
+# import cupy.cuda.nvtx as nvtx
 
 from .utils import load_model_checkpoint, choose_optimizer
 from ..utils import convert_tf_object_names
@@ -32,15 +34,35 @@ if 'precision' in config['training'].keys():
 if args.dataset_type == 'numerical':
     dataset = numerical_dataset_generator(**config['dataset'])
 elif args.dataset_type == 'analytical':
+    # nvtx.RangePush("dataset generator")
+    # dbfile = open('save_poisson_class', 'wb')
     dataset = reverse_poisson_dataset_generator(**config['dataset'])
+    # dbfile.close()
+    # nvtx.RangePop()
 
+# dbfile = open('save_poisson_class', 'wb')
+# dataset = reverse_poisson_dataset_generator(**config['dataset'])
+# pickle.dump(dataset, dbfile)
+# dbfile.close()
+#
+# dbfile = open('save_dataset', 'wb')
+# pickle.dump(dataset.__getitem__(0), dbfile)
+# dbfile.close()
+
+# ----------------------------------------
+#
+dbfile1 = open('save_dataset', 'rb')
+dataset_getitem = pickle.load(dbfile1)
+dbfile1.close()
+#
 dist_strategy = tf.distribute.MirroredStrategy(cross_device_ops=tf.distribute.ReductionToOneDevice())#nccl causes errors on POWER9
 with dist_strategy.scope():
     model = Homogeneous_Poisson_NN_Legacy(**config['model'])
     optimizer = choose_optimizer(config['training']['optimizer'])(**config['training']['optimizer_parameters'])
     loss = loss_wrapper(global_batch_size = config['dataset']['batch_size'], **config['training']['loss_parameters'])
 
-    inp,tar=dataset.__getitem__(0)
+    # inp,tar=dataset.__getitem__(0)
+    inp, tar = dataset_getitem
     out = model([inp[0][:1],inp[1][:1,:1]])
     model.compile(loss=loss,optimizer=optimizer)
     cb = [
@@ -53,8 +75,9 @@ with dist_strategy.scope():
 
     if args.learning_rate is not None:
         model.optimizer.learning_rate = config['training']['optimizer_parameters']['learning_rate'] if args.learning_rate.lower() == 'from_json' else float(args.learning_rate)
-    
+
     model.summary()
-    #model.run_eagerly = True
+    # model.run_eagerly = True
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
-    model.fit(dataset,epochs=config['training']['n_epochs'],callbacks = cb)
+    # dataset_class = reverse_poisson_dataset_generator(**config['dataset'])
+    model.fit(dataset, epochs=config['training']['n_epochs'],callbacks = cb, verbose=1, initial_epoch=17)
