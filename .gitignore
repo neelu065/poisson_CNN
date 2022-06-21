@@ -1,4 +1,4 @@
-*.py~
+*.pyc
 Untitled*
 __pycache__/
 .ipynb_checkpoints/
