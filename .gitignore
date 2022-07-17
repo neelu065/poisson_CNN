@@ -7,5 +7,5 @@ build/
 dist/
 poisson_CNN.egg-info/
 *.json~
-out_txt/
+out_txt/*.txt
 .idea/
