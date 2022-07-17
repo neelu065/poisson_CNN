@@ -1,0 +1,25 @@
+Model: "resnet"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ conv2d (Conv2D)             multiple                  444       
+                                                                 
+ conv2d_1 (Conv2D)           multiple                  444       
+                                                                 
+ conv2d_2 (Conv2D)           multiple                  444       
+                                                                 
+ batch_normalization (BatchN  multiple                 12        
+ ormalization)                                                   
+                                                                 
+ batch_normalization_1 (Batc  multiple                 12        
+ hNormalization)                                                 
+                                                                 
+=================================================================
+Total params: 1,356
+Trainable params: 1,344
+Non-trainable params: 12
+_________________________________________________________________
+--Return--
+> /home/j20210241/AI_CFD/poisson_CNN/poisson_CNN/poisson_CNN/blocks/resnet.py(47)<module>()->None
+-> pdb.set_trace()
+(Pdb) 

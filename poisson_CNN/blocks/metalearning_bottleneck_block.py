@@ -240,7 +240,7 @@ if __name__ == '__main__':
     mod = dummy_model(conv,bot)
     mod.compile(loss='mse',optimizer=tf.keras.optimizers.Adam())
     mod.fit(dg,epochs=5)
-            
+    mod.summary()            
     
     '''
     res = bot([conv_inp,dense_inp])

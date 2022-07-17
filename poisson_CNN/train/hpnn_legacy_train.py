@@ -66,7 +66,11 @@ with dist_strategy.scope():
     out = model([inp[0][:1],inp[1][:1,:1]])
     model.compile(loss=loss,optimizer=optimizer)
     cb = [
+<<<<<<< HEAD
         tf.keras.callbacks.ModelCheckpoint(checkpoint_dir + '/chkpt-epoch-{epoch:02d}.mse-{mse:.4f}',save_weights_only=True,save_best_only=True,monitor = 'loss'),
+=======
+        tf.keras.callbacks.ModelCheckpoint(checkpoint_dir + '/chkpt-epoch-{epoch:02d}.mse-{mse:.4f}', save_weights_only=True, save_best_only=True, monitor='mse', verbose=1),
+>>>>>>> 898fa155f2b1649503e7997c23e177864ebfdb48
         tf.keras.callbacks.ReduceLROnPlateau(patience = 4,monitor='loss',min_lr=config['training']['min_learning_rate']),
         tf.keras.callbacks.TerminateOnNaN()
     ]
@@ -79,5 +83,9 @@ with dist_strategy.scope():
     model.summary()
     # model.run_eagerly = True
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+<<<<<<< HEAD
     # dataset_class = reverse_poisson_dataset_generator(**config['dataset'])
     model.fit(dataset, epochs=config['training']['n_epochs'],callbacks = cb, verbose=1, initial_epoch=17)
+=======
+    model.fit(dataset,epochs=config['training']['n_epochs'],callbacks = cb) #, initial_epoch=3)
+>>>>>>> 898fa155f2b1649503e7997c23e177864ebfdb48

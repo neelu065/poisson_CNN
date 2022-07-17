@@ -98,7 +98,8 @@ def Pix2Pix_Generator(depth = 8, nx = None, ny = None, out_channels = 1, in_chan
     # Upsampling and establishing the skip connections
     for up, shape, skip in zip(up_stack, shape_return_layers, skips):
         xshape = shape(skip)
-        x = up([x, xshape])
+       	x = up([x, xshape])
+	#x = (512, 512)
         x = tf.keras.layers.Concatenate(axis = channels_axis)([x, skip])
 
     x = last(x)

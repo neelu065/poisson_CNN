@@ -68,6 +68,7 @@ if __name__ == '__main__':
     cmin = 5
     ctrl_pt_range = [[cmin,cmax] for _ in range(ndims)]
     hbc = True
-    rpdg = reverse_poisson_dataset_generator(10,10,grid_size_range,ctrl_pt_range,ctrl_pt_range,grid_spacings_range=dxrange,homogeneous_bc = hbc,normalize_domain_size = False)
+    rpdg = reverse_poisson_dataset_generator(10,10,grid_size_range,ctrl_pt_range,ctrl_pt_range,grid_spacings_range=dxrange,homogeneous_bc = hbc,normalizations = False)
     inp, out = rpdg.__getitem__()
+    print(rpdg)
     print(loss_func(inp[0],out,inp[-1]))
