@@ -1,0 +1,2 @@
+model_checkpoint_path: "chkpt-epoch-94.mse-0.0326"
+all_model_checkpoint_paths: "chkpt-epoch-94.mse-0.0326"
